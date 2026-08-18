@@ -3,14 +3,14 @@ import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  base: '/treebox/',
+  base: '/Treebox/',
   plugins: [
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: '我的工具箱',
-        short_name: '工具箱',
+        name: 'Treebox',
+        short_name: 'Treebox',
         description: '一个像书架一样的个人工具箱',
         theme_color: '#3b82f6',
         background_color: '#ffffff',
