@@ -2,14 +2,13 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { defaultCategories } from '../data/tools'
 
-const DATA_VERSION = 2  // 每次改 tools.js 就加 1
+const DATA_VERSION = 3  // 每次改数据结构就加 1
 
 function loadState() {
   try {
     const raw = localStorage.getItem('toolbox_v1')
     if (raw) {
       const parsed = JSON.parse(raw)
-      // 版本不匹配就用新数据
       if (parsed.version !== DATA_VERSION) return null
       return parsed
     }
@@ -27,6 +26,16 @@ export const useAppStore = defineStore('app', () => {
   const grid = ref(saved?.grid || '3x3')
   const radius = ref(saved?.radius ?? 12)
   const opened = ref(saved?.opened || false)
+
+  // === 新增 ===
+  const bgColor = ref(saved?.bgColor || '')
+  const textColor = ref(saved?.textColor || '')
+  const navColor = ref(saved?.navColor || '')
+  const locale = ref(saved?.locale || 'auto')
+  const bgAnimation = ref(saved?.bgAnimation || '')
+  const fontSize = ref(saved?.fontSize ?? 16)
+  const enableGlass = ref(saved?.enableGlass ?? false)
+  const reduceMotion = ref(saved?.reduceMotion ?? false)
 
   const isDark = computed(() => {
     if (theme.value === 'dark') return true
@@ -92,13 +101,25 @@ export const useAppStore = defineStore('app', () => {
       grid: grid.value,
       radius: radius.value,
       opened: opened.value,
+      bgColor: bgColor.value,
+      textColor: textColor.value,
+      navColor: navColor.value,
+      locale: locale.value,
+      bgAnimation: bgAnimation.value,
+      fontSize: fontSize.value,
+      enableGlass: enableGlass.value,
+      reduceMotion: reduceMotion.value,
     }))
   }
 
-  watch([categories, favorites, theme, accent, grid, radius, opened], persist, { deep: true })
+  watch([
+    categories, favorites, theme, accent, grid, radius, opened,
+    bgColor, textColor, navColor, locale, bgAnimation, fontSize, enableGlass, reduceMotion
+  ], persist, { deep: true })
 
   return {
     categories, favorites, theme, accent, grid, radius, opened,
+    bgColor, textColor, navColor, locale, bgAnimation, fontSize, enableGlass, reduceMotion,
     isDark, allTools, favTools,
     toggleFav, isFav, addCategory, addTool,
     findTool, findCategory, persist,
