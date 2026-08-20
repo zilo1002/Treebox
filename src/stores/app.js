@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { defaultCategories } from '../data/tools'
 
-const DATA_VERSION = 3  // 每次改数据结构就加 1
+const DATA_VERSION = 4  // 每次改数据结构就加 1
 
 function loadState() {
   try {
@@ -16,16 +16,52 @@ function loadState() {
   return null
 }
 
+/**
+ * 合并默认分类中的新工具到用户本地缓存
+ * 保留用户的自定义分类和修改，只补充新增的工具
+ */
+function mergeCategories(savedCats, defaultCats) {
+  if (!savedCats || !defaultCats) return defaultCats
+
+  const merged = savedCats.map(sc => ({ ...sc, tools: [...sc.tools] }))
+
+  defaultCats.forEach(dc => {
+    const existing = merged.find(c => c.id === dc.id)
+    if (existing) {
+      // 分类已存在，补充新增的工具
+      dc.tools.forEach(dt => {
+        if (!existing.tools.find(t => t.id === dt.id)) {
+          existing.tools.push({ ...dt })
+        }
+      })
+      // 同步更新分类元数据（名称、图标、颜色可能已更新）
+      existing.name = dc.name
+      existing.icon = dc.icon
+      existing.color = dc.color
+    } else {
+      // 全新分类，直接添加
+      merged.push({ ...dc, tools: dc.tools.map(t => ({ ...t })) })
+    }
+  })
+
+  return merged
+}
+
 export const useAppStore = defineStore('app', () => {
   const saved = loadState()
 
-  const categories = ref(saved?.categories || defaultCategories)
+  const categories = ref(mergeCategories(saved?.categories, defaultCategories))
   const favorites = ref(saved?.favorites || [])
   const theme = ref(saved?.theme || 'auto')
   const accent = ref(saved?.accent || '#3b82f6')
   const grid = ref(saved?.grid || '3x3')
   const radius = ref(saved?.radius ?? 12)
-  const opened = ref(saved?.opened || false)
+
+  // === 信封状态：用 sessionStorage 判断是否是新会话 ===
+  // 新会话（关闭标签后重新打开）→ 显示信封
+  // 同一会话中刷新 → 不显示信封，保持当前页面
+  const sessionOpened = sessionStorage.getItem('toolbox_session_opened')
+  const opened = ref(sessionOpened ? true : false)
 
   // === 新增 ===
   const bgColor = ref(saved?.bgColor || '')
@@ -100,7 +136,7 @@ export const useAppStore = defineStore('app', () => {
       accent: accent.value,
       grid: grid.value,
       radius: radius.value,
-      opened: opened.value,
+      // opened 不再持久化，由 sessionStorage 控制
       bgColor: bgColor.value,
       textColor: textColor.value,
       navColor: navColor.value,
@@ -113,7 +149,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   watch([
-    categories, favorites, theme, accent, grid, radius, opened,
+    categories, favorites, theme, accent, grid, radius,
     bgColor, textColor, navColor, locale, bgAnimation, fontSize, enableGlass, reduceMotion
   ], persist, { deep: true })
 
