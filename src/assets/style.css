@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --accent: #3b82f6;
   --radius: 12px;
   --font-size: 16px;
@@ -20,7 +20,13 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-html, body, #app {
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  -webkit-overflow-scrolling: touch;
+}
+#app {
   width: 100%;
   height: 100%;
   overflow: hidden;
