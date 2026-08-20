@@ -1,0 +1,998 @@
+<!-- CitationTool.vue - 学术引用助手 -->
+<template>
+  <div class="citation-tool">
+    <!-- 步骤导航 -->
+    <div class="citation-steps">
+      <div
+        v-for="(step, idx) in steps"
+        :key="step.key"
+        class="step-item"
+        :class="{ active: currentStep === idx, done: currentStep > idx }"
+        @click="currentStep = idx"
+      >
+        <span class="step-num">{{ idx + 1 }}</span>
+        <span class="step-label">{{ step.label }}</span>
+      </div>
+    </div>
+
+    <!-- Step 1: 导入文档 -->
+    <div v-if="currentStep === 0" class="step-panel">
+      <div class="import-section">
+        <h3>📄 导入正文</h3>
+        <p class="hint">支持直接粘贴文本，或上传 .docx / .txt / .md 文件提取内容</p>
+
+        <div class="upload-area" @click="$refs.fileInput.click()" @drop.prevent="onDrop" @dragover.prevent>
+          <input ref="fileInput" type="file" accept=".docx,.txt,.md" @change="onFileChange" style="display:none" />
+          <div class="upload-icon">📁</div>
+          <div class="upload-text">点击上传或拖拽文件到此处</div>
+          <div class="upload-types">支持 .docx / .txt / .md</div>
+        </div>
+
+        <div class="or-divider">或</div>
+
+        <textarea
+          v-model="rawText"
+          class="text-input"
+          rows="12"
+          placeholder="在此粘贴论文正文..."
+        ></textarea>
+
+        <div class="step-actions">
+          <button class="btn-primary" @click="nextStep" :disabled="!rawText.trim()">
+            下一步：管理参考文献 →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: 参考文献 -->
+    <div v-if="currentStep === 1" class="step-panel">
+      <div class="ref-section">
+        <h3>📚 参考文献</h3>
+        <p class="hint">添加参考文献条目，系统将自动按格式排序并生成文末列表</p>
+
+        <div class="ref-format-bar">
+          <label>引用格式：</label>
+          <select v-model="citationStyle">
+            <option value="gb7714">GB/T 7714（国标）</option>
+            <option value="apa7">APA 7th</option>
+            <option value="mla9">MLA 9th</option>
+            <option value="chicago17">Chicago 17th</option>
+          </select>
+          <label style="margin-left:16px">引用位置：</label>
+          <select v-model="citePosition">
+            <option value="superscript">上标 [1]</option>
+            <option value="bracket">括号 [1]</option>
+            <option value="authorYear">作者-年份 (张三, 2023)</option>
+            <option value="footnote">脚注</option>
+          </select>
+        </div>
+
+        <div class="ref-list">
+          <div v-for="(ref, idx) in references" :key="ref.id" class="ref-item">
+            <div class="ref-header">
+              <span class="ref-index">[{{ idx + 1 }}]</span>
+              <button class="ref-del" @click="removeRef(idx)">✕</button>
+            </div>
+            <div class="ref-fields">
+              <input v-model="ref.authors" placeholder="作者（如：张三, 李四）" />
+              <input v-model="ref.year" placeholder="年份" type="number" />
+              <input v-model="ref.title" placeholder="标题" />
+              <input v-model="ref.source" placeholder="期刊/出版社/来源" />
+              <input v-model="ref.volume" placeholder="卷(期):页码（可选）" />
+              <input v-model="ref.doi" placeholder="DOI / URL（可选）" />
+              <select v-model="ref.type">
+                <option value="journal">期刊论文</option>
+                <option value="book">专著</option>
+                <option value="conference">会议论文</option>
+                <option value="web">网页/电子资源</option>
+                <option value="thesis">学位论文</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-add" @click="addRef">+ 添加参考文献</button>
+        </div>
+
+        <div class="step-actions">
+          <button class="btn-secondary" @click="prevStep">← 上一步</button>
+          <button class="btn-primary" @click="nextStep">
+            下一步：标注引用 →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: 标注引用 -->
+    <div v-if="currentStep === 2" class="step-panel">
+      <div class="annotate-section">
+        <h3>✏️ 标注引用</h3>
+        <p class="hint">在正文中选中文字，点击对应参考文献即可插入引用标记</p>
+
+        <div class="annotate-layout">
+          <!-- 左侧：正文编辑区 -->
+          <div class="editor-pane">
+            <div class="pane-header">
+              <span>正文预览</span>
+              <label class="toggle-wrap">
+                <input type="checkbox" v-model="showCiteMarks" />
+                <span>显示引用标记</span>
+              </label>
+            </div>
+            <div ref="editor" class="rich-editor" contenteditable="true" @mouseup="onTextSelect">
+              <p v-for="(para, idx) in paragraphs" :key="idx" v-html="renderPara(para)"></p>
+            </div>
+          </div>
+
+          <!-- 右侧：快速引用面板 -->
+          <div class="ref-pane">
+            <div class="pane-header">快速引用</div>
+            <div class="ref-quick-list">
+              <div
+                v-for="(ref, idx) in references"
+                :key="ref.id"
+                class="ref-quick-item"
+                :class="{ disabled: !selectedText }"
+                @click="insertCitation(idx)"
+              >
+                <span class="ref-quick-num">[{{ idx + 1 }}]</span>
+                <span class="ref-quick-title">{{ ref.title || '未命名' }}</span>
+              </div>
+            </div>
+
+            <div class="pane-header" style="margin-top:16px">题注与交叉引用</div>
+            <div class="caption-section">
+              <button class="btn-small" @click="addCaption('figure')">+ 添加图注</button>
+              <button class="btn-small" @click="addCaption('table')">+ 添加表注</button>
+            </div>
+            <div class="caption-list">
+              <div v-for="(cap, idx) in captions" :key="cap.id" class="caption-item">
+                <span>{{ cap.label }} {{ cap.num }}：</span>
+                <input v-model="cap.text" placeholder="标题" />
+                <button @click="insertCrossRef(cap)">插入引用</button>
+                <button @click="removeCaption(idx)">✕</button>
+              </div>
+            </div>
+
+            <div class="pane-header" style="margin-top:16px">脚注 / 尾注</div>
+            <div class="footnote-section">
+              <button class="btn-small" @click="addFootnote">+ 添加脚注</button>
+            </div>
+            <div class="footnote-list">
+              <div v-for="(fn, idx) in footnotes" :key="fn.id" class="footnote-item">
+                <span>注{{ idx + 1 }}：</span>
+                <input v-model="fn.text" placeholder="脚注内容" />
+                <button @click="insertFootnoteMark(idx)">插入标记</button>
+                <button @click="removeFootnote(idx)">✕</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button class="btn-secondary" @click="prevStep">← 上一步</button>
+          <button class="btn-primary" @click="nextStep">
+            下一步：预览导出 →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: 预览导出 -->
+    <div v-if="currentStep === 3" class="step-panel">
+      <div class="export-section">
+        <h3>👁️ 预览</h3>
+
+        <div class="preview-tabs">
+          <button
+            v-for="tab in previewTabs"
+            :key="tab.key"
+            class="preview-tab"
+            :class="{ active: previewTab === tab.key }"
+            @click="previewTab = tab.key"
+          >{{ tab.label }}</button>
+        </div>
+
+        <!-- 正文预览 -->
+        <div v-if="previewTab === 'body'" class="preview-body">
+          <div class="doc-preview" v-html="previewBodyHtml"></div>
+        </div>
+
+        <!-- 参考文献列表预览 -->
+        <div v-if="previewTab === 'refs'" class="preview-refs">
+          <h4>参考文献</h4>
+          <ol>
+            <li v-for="ref in formattedRefs" :key="ref.id" v-html="ref.formatted"></li>
+          </ol>
+        </div>
+
+        <!-- 题注列表 -->
+        <div v-if="previewTab === 'captions'" class="preview-captions">
+          <h4>题注列表</h4>
+          <div v-for="cap in captions" :key="cap.id">
+            {{ cap.label }} {{ cap.num }}：{{ cap.text }}
+          </div>
+        </div>
+
+        <!-- 脚注列表 -->
+        <div v-if="previewTab === 'footnotes'" class="preview-footnotes">
+          <h4>脚注</h4>
+          <div v-for="(fn, idx) in footnotes" :key="fn.id">
+            {{ idx + 1 }}. {{ fn.text }}
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button class="btn-secondary" @click="prevStep">← 上一步</button>
+          <button class="btn-export" @click="exportDocx">
+            📥 导出 Word 文档 (.docx)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, nextTick } from 'vue'
+import { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel, Footer, PageNumber, convertInchesToTwip } from 'docx'
+
+const steps = [
+  { key: 'import', label: '导入文档' },
+  { key: 'refs', label: '参考文献' },
+  { key: 'annotate', label: '标注引用' },
+  { key: 'export', label: '预览导出' },
+]
+const currentStep = ref(0)
+
+// === Step 1 ===
+const rawText = ref('')
+const fileInput = ref(null)
+
+async function onFileChange(e) {
+  const file = e.target.files[0]
+  if (!file) return
+  if (file.name.endsWith('.docx')) {
+    // 用 mammoth 提取纯文本（假设 mammoth 已全局可用或按需加载）
+    const mammoth = await import('mammoth')
+    const arr = await file.arrayBuffer()
+    const result = await mammoth.extractRawText({ arrayBuffer: arr })
+    rawText.value = result.value
+  } else {
+    rawText.value = await file.text()
+  }
+}
+function onDrop(e) {
+  const file = e.dataTransfer.files[0]
+  if (file) {
+    const ev = { target: { files: [file] } }
+    onFileChange(ev)
+  }
+}
+
+// === Step 2 ===
+const citationStyle = ref('gb7714')
+const citePosition = ref('superscript')
+const references = ref([])
+
+let refIdCounter = 1
+function addRef() {
+  references.value.push({
+    id: refIdCounter++,
+    authors: '',
+    year: '',
+    title: '',
+    source: '',
+    volume: '',
+    doi: '',
+    type: 'journal',
+  })
+}
+function removeRef(idx) {
+  references.value.splice(idx, 1)
+}
+
+// 格式化单条参考文献
+function formatRef(ref, idx) {
+  const a = ref.authors || '佚名'
+  const y = ref.year || 'n.d.'
+  const t = ref.title || '无标题'
+  const s = ref.source || ''
+  const v = ref.volume || ''
+  const d = ref.doi ? `DOI:${ref.doi}` : ''
+
+  switch (citationStyle.value) {
+    case 'gb7714':
+      if (ref.type === 'journal') return `${a}. ${t}[J]. ${s}, ${y}${v ? ', ' + v : ''}.${d ? ' ' + d : ''}`
+      if (ref.type === 'book') return `${a}. ${t}[M]. ${s}, ${y}.${d ? ' ' + d : ''}`
+      if (ref.type === 'web') return `${a}. ${t}[EB/OL]. ${s}, ${y}.${d ? ' ' + d : ''}`
+      return `${a}. ${t}[J]. ${s}, ${y}.${d ? ' ' + d : ''}`
+    case 'apa7':
+      return `${a} (${y}). ${t}. ${s}${v ? ', ' + v : ''}.${d ? ' https://doi.org/' + ref.doi : ''}`
+    case 'mla9':
+      return `${a}. "${t}." ${s}${v ? ', ' + v : ''}, ${y}.${d ? ', ' + ref.doi : ''}`
+    case 'chicago17':
+      return `${a}. ${t}. ${s}, ${y}.${d ? ' ' + ref.doi : ''}`
+    default:
+      return `${a}. ${t}. ${s}, ${y}.`
+  }
+}
+
+const formattedRefs = computed(() => {
+  return references.value.map((ref, idx) => ({
+    id: ref.id,
+    formatted: formatRef(ref, idx),
+  }))
+})
+
+// === Step 3 ===
+const paragraphs = computed(() => rawText.value.split('\n').filter(p => p.trim()))
+const showCiteMarks = ref(true)
+const selectedText = ref('')
+const editor = ref(null)
+
+// 引用映射：{ paragraphIndex: [{ start, end, refIndex }] }
+const citations = ref({})
+
+function onTextSelect() {
+  const sel = window.getSelection()
+  if (sel && sel.toString().trim()) {
+    selectedText.value = sel.toString().trim()
+  }
+}
+
+function renderPara(text) {
+  // 简单渲染，实际应处理引用标记高亮
+  let html = escapeHtml(text)
+  return html
+}
+
+function escapeHtml(t) {
+  const div = document.createElement('div')
+  div.textContent = t
+  return div.innerHTML
+}
+
+function insertCitation(refIdx) {
+  if (!selectedText.value) return
+  // 在实际实现中，这里需要记录引用位置
+  // 简化版：在光标位置插入标记文本
+  const mark = generateCiteMark(refIdx)
+  document.execCommand('insertText', false, mark)
+  selectedText.value = ''
+}
+
+function generateCiteMark(refIdx) {
+  const n = refIdx + 1
+  switch (citePosition.value) {
+    case 'superscript': return `[${n}]`
+    case 'bracket': return `[${n}]`
+    case 'authorYear': {
+      const ref = references.value[refIdx]
+      const author = (ref.authors || '佚名').split(',')[0].trim()
+      return `(${author}, ${ref.year || 'n.d.'})`
+    }
+    case 'footnote': return `${n}`
+    default: return `[${n}]`
+  }
+}
+
+// 题注
+const captions = ref([])
+let capIdCounter = 1
+function addCaption(type) {
+  const label = type === 'figure' ? '图' : '表'
+  const num = captions.value.filter(c => c.type === type).length + 1
+  captions.value.push({ id: capIdCounter++, type, label, num, text: '' })
+}
+function removeCaption(idx) {
+  captions.value.splice(idx, 1)
+  // 重新编号
+  let f = 1, t = 1
+  captions.value.forEach(c => {
+    if (c.type === 'figure') c.num = f++
+    if (c.type === 'table') c.num = t++
+  })
+}
+function insertCrossRef(cap) {
+  if (!selectedText.value) return
+  document.execCommand('insertText', false, `（见${cap.label}${cap.num}）`)
+}
+
+// 脚注
+const footnotes = ref([])
+let fnIdCounter = 1
+function addFootnote() {
+  footnotes.value.push({ id: fnIdCounter++, text: '' })
+}
+function removeFootnote(idx) {
+  footnotes.value.splice(idx, 1)
+}
+function insertFootnoteMark(idx) {
+  if (!selectedText.value) return
+  document.execCommand('insertText', false, `${idx + 1}`)
+}
+
+// === Step 4 ===
+const previewTab = ref('body')
+const previewTabs = [
+  { key: 'body', label: '正文' },
+  { key: 'refs', label: '参考文献' },
+  { key: 'captions', label: '题注' },
+  { key: 'footnotes', label: '脚注' },
+]
+
+const previewBodyHtml = computed(() => {
+  // 简化预览：把编辑器内容拿出来
+  if (editor.value) {
+    return editor.value.innerHTML
+  }
+  return paragraphs.value.map(p => `<p>${escapeHtml(p)}</p>`).join('')
+})
+
+// 使用 docx 库生成真正的 .docx 文件
+async function exportDocx() {
+  try {
+    const children = []
+
+    // 标题
+    children.push(
+      new Paragraph({
+        text: '论文正文',
+        heading: HeadingLevel.TITLE,
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 400 },
+      })
+    )
+
+    // 正文段落
+    const bodyHtml = editor.value ? editor.value.innerHTML : previewBodyHtml.value
+    const plainParas = bodyHtml.split('</p>').filter(p => p.trim())
+    plainParas.forEach(p => {
+      const text = p.replace(/<[^>]+>/g, '').trim()
+      if (text) {
+        children.push(
+          new Paragraph({
+            children: [new TextRun({ text, font: 'Times New Roman', size: 24 })],
+            spacing: { after: 200, line: 360 },
+            alignment: AlignmentType.JUSTIFIED,
+          })
+        )
+      }
+    })
+
+    // 题注
+    if (captions.value.length > 0) {
+      children.push(new Paragraph({ text: '', spacing: { before: 400 } }))
+      children.push(
+        new Paragraph({
+          text: '题注',
+          heading: HeadingLevel.HEADING_2,
+          spacing: { after: 200 },
+        })
+      )
+      captions.value.forEach(cap => {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({ text: `${cap.label}${cap.num} `, bold: true, font: 'Times New Roman', size: 22 }),
+              new TextRun({ text: cap.text, font: 'Times New Roman', size: 22 }),
+            ],
+            spacing: { after: 120 },
+          })
+        )
+      })
+    }
+
+    // 脚注
+    if (footnotes.value.length > 0) {
+      children.push(new Paragraph({ text: '', spacing: { before: 400 } }))
+      children.push(
+        new Paragraph({
+          text: '脚注',
+          heading: HeadingLevel.HEADING_2,
+          spacing: { after: 200 },
+        })
+      )
+      footnotes.value.forEach((fn, idx) => {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({ text: `${idx + 1}. `, bold: true, font: 'Times New Roman', size: 20 }),
+              new TextRun({ text: fn.text, font: 'Times New Roman', size: 20 }),
+            ],
+            spacing: { after: 100 },
+          })
+        )
+      })
+    }
+
+    // 分页 + 参考文献
+    children.push(new Paragraph({ pageBreakBefore: true }))
+    children.push(
+      new Paragraph({
+        text: '参考文献',
+        heading: HeadingLevel.HEADING_1,
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 400 },
+      })
+    )
+
+    formattedRefs.value.forEach((ref, idx) => {
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({ text: `[${idx + 1}] `, bold: true, font: 'Times New Roman', size: 22 }),
+            new TextRun({ text: ref.formatted, font: 'Times New Roman', size: 22 }),
+          ],
+          spacing: { after: 160, line: 360 },
+          alignment: AlignmentType.JUSTIFIED,
+        })
+      )
+    })
+
+    // 构建文档
+    const doc = new Document({
+      sections: [{
+        properties: {
+          page: {
+            margin: {
+              top: convertInchesToTwip(1),
+              right: convertInchesToTwip(1),
+              bottom: convertInchesToTwip(1),
+              left: convertInchesToTwip(1),
+            },
+          },
+        },
+        children,
+        footers: {
+          default: new Footer({
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [
+                  new TextRun({
+                    children: ['第 ', PageNumber.CURRENT, ' 页'],
+                    font: 'Times New Roman',
+                    size: 18,
+                  }),
+                ],
+              }),
+            ],
+          }),
+        },
+      }],
+    })
+
+    const blob = await Packer.toBlob(doc)
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = '论文_引用标注.docx'
+    a.click()
+    URL.revokeObjectURL(url)
+    alert('已导出 Word 文档 (.docx)')
+  } catch (err) {
+    console.error(err)
+    alert('导出失败：' + err.message)
+  }
+}
+
+// 导航
+function nextStep() {
+  if (currentStep.value < steps.length - 1) currentStep.value++
+}
+function prevStep() {
+  if (currentStep.value > 0) currentStep.value--
+}
+</script>
+
+<style scoped>
+.citation-tool {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* 步骤导航 */
+.citation-steps {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 8px;
+  background: var(--bg-muted);
+  border-radius: 12px;
+}
+.step-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.step-item.active {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 500;
+}
+.step-item.done {
+  color: var(--accent);
+}
+.step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+.step-item.active .step-num {
+  background: rgba(255,255,255,0.3);
+  color: #fff;
+}
+
+/* 面板 */
+.step-panel {
+  background: var(--bg);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 12px var(--shadow);
+}
+.step-panel h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.hint {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin-bottom: 16px;
+}
+
+/* 上传区 */
+.upload-area {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 12px;
+}
+.upload-area:hover {
+  border-color: var(--accent);
+  background: var(--bg-muted);
+}
+.upload-icon { font-size: 32px; margin-bottom: 8px; }
+.upload-text { font-size: 14px; color: var(--text-secondary); }
+.upload-types { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+
+.or-divider {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin: 12px 0;
+  position: relative;
+}
+.or-divider::before,
+.or-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: var(--border);
+}
+.or-divider::before { left: 0; }
+.or-divider::after { right: 0; }
+
+.text-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  font-family: inherit;
+  background: var(--bg-raised);
+  color: var(--text-primary);
+}
+
+/* 参考文献 */
+.ref-format-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.ref-format-bar label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.ref-format-bar select {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--bg-raised);
+  color: var(--text-primary);
+}
+
+.ref-list { display: flex; flex-direction: column; gap: 12px; }
+.ref-item {
+  background: var(--bg-raised);
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+}
+.ref-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.ref-index {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.ref-del {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  font-size: 14px;
+}
+.ref-del:hover { background: #ffeaea; color: #e74c3c; }
+.ref-fields {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.ref-fields input,
+.ref-fields select {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: inherit;
+}
+.ref-fields input::placeholder { color: var(--text-tertiary); }
+
+.btn-add {
+  padding: 10px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-add:hover { background: var(--bg-muted); }
+
+/* 标注区 */
+.annotate-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 640px) {
+  .annotate-layout { grid-template-columns: 1fr; }
+}
+
+.editor-pane,
+.ref-pane {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.pane-header {
+  padding: 10px 12px;
+  background: var(--bg-muted);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.rich-editor {
+  padding: 12px;
+  min-height: 300px;
+  max-height: 500px;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-primary);
+}
+.rich-editor p { margin-bottom: 8px; }
+
+.ref-quick-list {
+  padding: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.ref-quick-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-size: 12px;
+}
+.ref-quick-item:hover { background: var(--bg-muted); }
+.ref-quick-item.disabled { opacity: 0.4; pointer-events: none; }
+.ref-quick-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.ref-quick-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.caption-section,
+.footnote-section {
+  padding: 8px;
+}
+.btn-small {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-raised);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  margin-right: 6px;
+  margin-bottom: 6px;
+}
+.btn-small:hover { background: var(--bg-muted); }
+
+.caption-list,
+.footnote-list {
+  padding: 0 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.caption-item,
+.footnote-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.caption-item input,
+.footnote-item input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  background: var(--bg);
+  color: var(--text-primary);
+}
+.caption-item button,
+.footnote-item button {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-raised);
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+/* 预览 */
+.preview-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.preview-tab {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 8px;
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.preview-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.doc-preview {
+  padding: 20px;
+  background: var(--bg-raised);
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.8;
+  min-height: 200px;
+}
+.preview-refs ol,
+.preview-captions,
+.preview-footnotes {
+  padding: 16px;
+  background: var(--bg-raised);
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.preview-refs li { margin-bottom: 6px; }
+
+/* 按钮 */
+.step-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.btn-primary,
+.btn-secondary,
+.btn-export {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { opacity: 0.9; }
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn-secondary {
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+}
+.btn-secondary:hover { background: var(--bg-strong); }
+.btn-export {
+  background: #10b981;
+  color: #fff;
+}
+.btn-export:hover { opacity: 0.9; }
+</style>
