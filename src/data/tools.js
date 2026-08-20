@@ -7,6 +7,7 @@ export const defaultCategories = [
     tools: [
       { id: 'rename', name: '文件批量改名', icon: '📁', type: 'rename', desc: '批量重命名' },
       { id: 'proofread', name: '中文排版检查', icon: '📋', type: 'proofread', desc: '排版检查修复' },
+      { id: 'citation', name: '引用助手', icon: '📑', type: 'citation', desc: '参考文献/题注/脚注管理' },
     ]
   },
   {
@@ -37,6 +38,7 @@ export const defaultCategories = [
 export const toolTypeMap = {
   rename: () => import('../tools/RenameTool.vue'),
   proofread: () => import('../tools/ProofreaderTool.vue'),
+  citation: () => import('../tools/CitationTool.vue'),
   base64: () => import('../tools/Base64Tool.vue'),
   qrcode: () => import('../tools/QrCodeTool.vue'),
   timer: () => import('../tools/TimerTool.vue'),
@@ -49,11 +51,11 @@ export const toolTypeMap = {
 }
 
 export const toolIcons = {
-  rename: '📁', proofread: '📋', base64: '🔐', qrcode: '📱', timer: '⏱️', random: '🎲',
+  rename: '📁', proofread: '📋', citation: '📑', base64: '🔐', qrcode: '📱', timer: '⏱️', random: '🎲',
   barrage: '📢', color: '🎨', text: '📝', calc: '🧮', image: '🗜️',
 }
 
 export const toolDescs = {
-  rename: '批量重命名', proofread: '排版检查修复', base64: '编解码', qrcode: '生成识别', timer: '计时器', random: '生成随机',
+  rename: '批量重命名', proofread: '排版检查修复', citation: '参考文献管理', base64: '编解码', qrcode: '生成识别', timer: '计时器', random: '生成随机',
   barrage: '全屏弹幕', color: '提取颜色', text: '文本处理', calc: '简单计算', image: '图片处理',
 }
