@@ -15,10 +15,10 @@ export function useTheme() {
     root.style.setProperty('--font-size', store.fontSize + 'px')
 
     // 背景色（用户自定义优先，否则跟随明暗）
-    const bg = store.bgColor || (dark ? '#0f0f11' : '#ffffff')
-    const bgMuted = store.bgColor || (dark ? '#1a1a1e' : '#f5f5f7')
-    const bgRaised = dark ? '#1e1e22' : '#fafafa'
-    const bgStrong = dark ? '#25252a' : '#e8e8ec'
+    const bg = store.bgColor || (dark ? '#17211B' : '#EEF3EC')
+    const bgMuted = store.bgColor || (dark ? '#1E2A22' : '#E3EBE0')
+    const bgRaised = dark ? '#232F27' : '#FAFBF7'
+    const bgStrong = dark ? '#2C3A30' : '#D6E0D2'
 
     root.style.setProperty('--bg', bg)
     root.style.setProperty('--bg-muted', bgMuted)
@@ -26,13 +26,13 @@ export function useTheme() {
     root.style.setProperty('--bg-strong', bgStrong)
 
     // 文字色
-    const textPrimary = store.textColor || (dark ? '#f0f0f5' : '#111114')
+    const textPrimary = store.textColor || (dark ? '#E9F0E9' : '#25352A')
     root.style.setProperty('--text-primary', textPrimary)
-    root.style.setProperty('--text-secondary', dark ? '#a0a0a8' : '#55555a')
-    root.style.setProperty('--text-tertiary', dark ? '#707078' : '#99999f')
-    root.style.setProperty('--border', dark ? '#2a2a30' : '#e5e5ea')
-    root.style.setProperty('--shadow', dark ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.06)')
-    root.style.setProperty('--meta', dark ? '#505058' : '#bbbbbf')
+    root.style.setProperty('--text-secondary', dark ? '#A8B8AA' : '#5A6D5E')
+    root.style.setProperty('--text-tertiary', dark ? '#7D8F80' : '#93A496')
+    root.style.setProperty('--border', dark ? '#2E3D33' : '#D8E2D6')
+    root.style.setProperty('--shadow', dark ? 'rgba(0,0,0,0.4)' : 'rgba(53,107,87,0.10)')
+    root.style.setProperty('--meta', dark ? '#5C6E60' : '#B9C8B4')
 
     // 导航栏颜色
     if (store.navColor) {
@@ -43,9 +43,9 @@ export function useTheme() {
 
     // 毛玻璃
     if (store.enableGlass) {
-      root.style.setProperty('--glass', dark ? 'rgba(30,30,34,0.65)' : 'rgba(255,255,255,0.65)')
+      root.style.setProperty('--glass', dark ? 'rgba(35,47,39,0.65)' : 'rgba(250,251,247,0.68)')
       root.style.setProperty('--glass-blur', '14px')
-      root.style.setProperty('--glass-border', dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)')
+      root.style.setProperty('--glass-border', dark ? 'rgba(255,255,255,0.06)' : 'rgba(53,107,87,0.08)')
     } else {
       root.style.setProperty('--glass', 'transparent')
       root.style.setProperty('--glass-blur', '0px')
