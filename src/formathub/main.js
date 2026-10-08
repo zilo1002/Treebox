@@ -692,7 +692,7 @@ function handleFiles(fileList, catId) {
     const e = getExt(f.name);
     if (!cat.exts.includes(e)) { toast('⚠️', '「'+f.name+'」'+t('notSupported')); return; }
     const supported0 = getSupportedTargets(catId, f.name);
-    const item = { file: f, id: Date.now()+Math.random(), status: 'pending', progress: 0, target: supported0[0] || Object.keys(cat.targets)[0], preview: null, customName: '', selected: true, convertedBlob: null, convertedName: '' };
+    const item = { file: f, id: Date.now()+Math.random(), status: 'pending', progress: 0, target: supported0[0] || Object.keys(cat.targets)[0], preview: null, customName: '', selected: true, convertedBlob: null, convertedName: '', zipPassword: '' };
     files.push(item);
     generatePreview(item, catId);
   });
@@ -780,6 +780,10 @@ window.rmFile = function(idx) {
 
 window.chgTarget = function(idx, val) {
   if (files[idx]) files[idx].target = val;
+};
+
+window.chgZipPassword = function(idx, val) {
+  if (files[idx]) files[idx].zipPassword = val;
 };
 
 window.chgCustomName = function(idx, val) {
@@ -981,6 +985,10 @@ function renderFiles(catId) {
         '<span class="text-[10px] text-slate-500 shrink-0">' + t('customName') + ':</span>' +
         '<input type="text" value="' + escapeHtml(customNameVal) + '" onchange="window.chgCustomName(' + idx + ',this.value)" class="flex-1 bg-slate-900/50 border border-slate-700 rounded-md px-2 py-1 text-[11px] text-slate-300 focus:border-' + cat.color + '-500 focus:outline-none">' +
       '</div>' +
+      ((catId === 'data' && e === 'zip') ? '<div class="mt-2 flex items-center gap-2">' +
+        '<span class="text-[10px] text-slate-500 shrink-0">' + (getLang() === 'en' ? 'ZIP password' : 'ZIP 密码') + ':</span>' +
+        '<input type="password" autocomplete="off" placeholder="' + (getLang() === 'en' ? 'Leave blank if none' : '没有密码就不填') + '" oninput="window.chgZipPassword(' + idx + ',this.value)" class="flex-1 bg-slate-900/50 border border-slate-700 rounded-md px-2 py-1 text-[11px] text-slate-300 focus:outline-none">' +
+      '</div>' : '') +
       renderPreview(item.preview, catId) +
       renderSizeCompare(item) +
       (item.status === 'converting' ? '<div class="mt-3 h-1 bg-slate-700 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-' + cat.color + '-500 to-' + cat.color + '-400 progress-bar" style="width:' + item.progress + '%"></div></div>' : '') +
@@ -1029,7 +1037,7 @@ async function startConvert(catId) {
       else if (catId === 'data') {
         if (ext === 'zip') {
           // ZIP 提取/打包：保持主线程（需要即时展示提取结果）
-          const r = await convArchive(item.file, target);
+          const r = await convArchive(item.file, target, item.zipPassword || '');
           if (r && r.type === 'extracted') {
             showExtractModal(r.entries);
             item.status = 'done'; item.progress = 100;
@@ -1107,7 +1115,14 @@ async function startConvert(catId) {
       toast('✅', '「'+item.file.name+'」'+t('done'));
     } catch (err) {
       item.status = 'error';
-      item.error = err.message || t('failed');
+      if (err && err.message === '__ZIP_NEEDS_PASSWORD__') {
+        item.error = getLang() === 'en' ? 'This ZIP is password-protected. Enter its password in the ZIP password field, then convert again.' : '这个 ZIP 带密码，请在下面的「ZIP 密码」里填入正确密码，再点一次转换。';
+      } else if (err && err.message === '__ZIP_WRONG_PASSWORD__') {
+        item.error = getLang() === 'en' ? 'Wrong ZIP password. Nothing was extracted.' : 'ZIP 密码不正确，没有解出任何文件。';
+        item.zipPassword = '';
+      } else {
+        item.error = (err && err.message) || t('failed');
+      }
       toast('❌', '「'+item.file.name+'」'+item.error);
     }
 
