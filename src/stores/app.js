@@ -20,7 +20,7 @@ function loadState() {
  * 合并默认分类中的新工具到用户本地缓存
  * 保留用户的自定义分类和修改，只补充新增的工具
  */
-function mergeCategories(savedCats, defaultCats) {
+function mergeCategories(savedCats, defaultCats, deletedToolKeys = [], deletedCatIds = []) {
   if (!savedCats || !defaultCats) return defaultCats
 
   const merged = savedCats.map(sc => ({ ...sc, tools: [...sc.tools] }))
@@ -28,8 +28,9 @@ function mergeCategories(savedCats, defaultCats) {
   defaultCats.forEach(dc => {
     const existing = merged.find(c => c.id === dc.id)
     if (existing) {
-      // 分类已存在，补充新增的工具
+      // 分类已存在，补充新增的工具（用户手动删掉的工具不要再补回来）
       dc.tools.forEach(dt => {
+        if (deletedToolKeys.includes(dc.id + ':' + dt.id)) return
         if (!existing.tools.find(t => t.id === dt.id)) {
           existing.tools.push({ ...dt })
         }
@@ -38,8 +39,8 @@ function mergeCategories(savedCats, defaultCats) {
       existing.name = dc.name
       existing.icon = dc.icon
       existing.color = dc.color
-    } else {
-      // 全新分类，直接添加
+    } else if (!deletedCatIds.includes(dc.id)) {
+      // 全新分类，直接添加（用户手动删掉的默认分类不要再补回来）
       merged.push({ ...dc, tools: dc.tools.map(t => ({ ...t })) })
     }
   })
@@ -50,7 +51,9 @@ function mergeCategories(savedCats, defaultCats) {
 export const useAppStore = defineStore('app', () => {
   const saved = loadState()
 
-  const categories = ref(mergeCategories(saved?.categories, defaultCategories))
+  const deletedToolKeys = ref(saved?.deletedToolKeys || [])
+  const deletedCatIds = ref(saved?.deletedCatIds || [])
+  const categories = ref(mergeCategories(saved?.categories, defaultCategories, deletedToolKeys.value, deletedCatIds.value))
   const favorites = ref(saved?.favorites || [])
   const theme = ref(saved?.theme || 'auto')
   const accent = ref(saved?.accent || '#356B57')
@@ -115,6 +118,33 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  function removeTool(categoryId, toolId) {
+    const cat = categories.value.find(c => c.id === categoryId)
+    if (!cat) return
+    const idx = cat.tools.findIndex(t => t.id === toolId)
+    if (idx < 0) return
+    cat.tools.splice(idx, 1)
+    const key = categoryId + ':' + toolId
+    if (!deletedToolKeys.value.includes(key)) deletedToolKeys.value.push(key)
+    const favIdx = favorites.value.indexOf(toolId)
+    if (favIdx >= 0) favorites.value.splice(favIdx, 1)
+    persist()
+  }
+
+  function removeCategory(categoryId) {
+    const idx = categories.value.findIndex(c => c.id === categoryId)
+    if (idx < 0) return
+    const [removed] = categories.value.splice(idx, 1)
+    if (removed) {
+      removed.tools.forEach(t => {
+        const favIdx = favorites.value.indexOf(t.id)
+        if (favIdx >= 0) favorites.value.splice(favIdx, 1)
+      })
+    }
+    if (!deletedCatIds.value.includes(categoryId)) deletedCatIds.value.push(categoryId)
+    persist()
+  }
+
   function findTool(toolId) {
     for (const c of categories.value) {
       const t = c.tools.find(x => x.id === toolId)
@@ -145,19 +175,22 @@ export const useAppStore = defineStore('app', () => {
       fontSize: fontSize.value,
       enableGlass: enableGlass.value,
       reduceMotion: reduceMotion.value,
+      deletedToolKeys: deletedToolKeys.value,
+      deletedCatIds: deletedCatIds.value,
     }))
   }
 
   watch([
     categories, favorites, theme, accent, grid, radius,
-    bgColor, textColor, navColor, locale, bgAnimation, fontSize, enableGlass, reduceMotion
+    bgColor, textColor, navColor, locale, bgAnimation, fontSize, enableGlass, reduceMotion,
+    deletedToolKeys, deletedCatIds
   ], persist, { deep: true })
 
   return {
     categories, favorites, theme, accent, grid, radius, opened,
     bgColor, textColor, navColor, locale, bgAnimation, fontSize, enableGlass, reduceMotion,
     isDark, allTools, favTools,
-    toggleFav, isFav, addCategory, addTool,
+    toggleFav, isFav, addCategory, addTool, removeTool, removeCategory,
     findTool, findCategory, persist,
   }
 })
