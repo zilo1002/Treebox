@@ -407,18 +407,17 @@ export const CATEGORIES = {
     emoji: '📄',
     title: '文档与办公文件',
     titleEn: 'Documents & Office',
-    desc: 'Word、Excel、PPT、PDF 等办公格式互转',
-    descEn: 'Word, Excel, PPT, PDF conversion',
+    desc: 'Word、Excel、TXT、Markdown 等格式互转',
+    descEn: 'Word, Excel, TXT, Markdown conversion',
     color: 'blue',
     bgGradient: 'from-blue-500/20 to-cyan-500/10',
     borderColor: 'border-blue-500/30',
     textColor: 'text-blue-400',
     dotColor: 'bg-blue-400',
-    accept: '.doc,.docx,.txt,.rtf,.odt,.pdf,.md,.pages,.xls,.xlsx,.csv,.ods,.xlsm,.ppt,.pptx,.odp,.key',
-    exts: ['doc','docx','txt','rtf','odt','pdf','md','pages','xls','xlsx','csv','ods','xlsm','ppt','pptx','odp','key'],
+    accept: '.docx,.txt,.md,.xls,.xlsx,.csv,.ods',
+    exts: ['docx','txt','md','xls','xlsx','csv','ods'],
     targets: {
       docx: { label: 'Word 文档', labelEn: 'Word Doc', ext: 'docx' },
-      doc: { label: 'Word 97-2003', labelEn: 'Word 97-2003', ext: 'doc' },
       txt: { label: '纯文本', labelEn: 'Plain Text', ext: 'txt' },
       md: { label: 'Markdown', labelEn: 'Markdown', ext: 'md' },
       html: { label: 'HTML 网页', labelEn: 'HTML', ext: 'html' },
@@ -440,14 +439,13 @@ export const CATEGORIES = {
     borderColor: 'border-purple-500/30',
     textColor: 'text-purple-400',
     dotColor: 'bg-purple-400',
-    accept: '.jpg,.jpeg,.png,.gif,.bmp,.webp,.tiff,.tif,.heic,.avif,.svg',
-    exts: ['jpg','jpeg','png','gif','bmp','webp','tiff','tif','heic','avif','svg'],
+    accept: '.jpg,.jpeg,.png,.gif,.webp,.svg',
+    exts: ['jpg','jpeg','png','gif','webp','svg'],
     targets: {
       png: { label: 'PNG 图片', labelEn: 'PNG', ext: 'png' },
       jpg: { label: 'JPEG 图片', labelEn: 'JPEG', ext: 'jpg' },
       webp: { label: 'WebP 图片', labelEn: 'WebP', ext: 'webp' },
       gif: { label: 'GIF 动图', labelEn: 'GIF', ext: 'gif' },
-      bmp: { label: 'BMP 图片', labelEn: 'BMP', ext: 'bmp' }
     }
   },
   ebook: {
@@ -455,8 +453,8 @@ export const CATEGORIES = {
     emoji: '📚',
     title: '电子书',
     titleEn: 'E-Books',
-    desc: 'EPUB、MOBI、AZW3 等电子书格式转换',
-    descEn: 'EPUB, MOBI, AZW3 conversion',
+    desc: 'EPUB、MOBI、AZW3、PDF 等电子书格式转换',
+    descEn: 'EPUB, MOBI, AZW3, PDF conversion',
     color: 'amber',
     bgGradient: 'from-amber-500/20 to-orange-500/10',
     borderColor: 'border-amber-500/30',
@@ -466,7 +464,9 @@ export const CATEGORIES = {
     exts: ['epub','mobi','azw3','pdf'],
     targets: {
       txt: { label: '纯文本', labelEn: 'Plain Text', ext: 'txt' },
-      html: { label: 'HTML 网页', labelEn: 'HTML', ext: 'html' }
+      html: { label: 'HTML 网页', labelEn: 'HTML', ext: 'html' },
+      pdf: { label: 'PDF 文档', labelEn: 'PDF', ext: 'pdf' },
+      epub: { label: 'EPUB 电子书', labelEn: 'EPUB', ext: 'epub' }
     }
   },
   data: {
@@ -481,14 +481,13 @@ export const CATEGORIES = {
     borderColor: 'border-emerald-500/30',
     textColor: 'text-emerald-400',
     dotColor: 'bg-emerald-400',
-    accept: '.json,.xml,.csv,.yaml,.yml,.toml,.zip,.rar,.7z',
-    exts: ['json','xml','csv','yaml','yml','toml','zip','rar','7z'],
+    accept: '.json,.xml,.csv,.yaml,.yml,.zip',
+    exts: ['json','xml','csv','yaml','yml','zip'],
     targets: {
       json: { label: 'JSON', labelEn: 'JSON', ext: 'json' },
       xml: { label: 'XML', labelEn: 'XML', ext: 'xml' },
       csv: { label: 'CSV', labelEn: 'CSV', ext: 'csv' },
       yaml: { label: 'YAML', labelEn: 'YAML', ext: 'yaml' },
-      toml: { label: 'TOML', labelEn: 'TOML', ext: 'toml' },
       zip: { label: 'ZIP 压缩包', labelEn: 'ZIP Archive', ext: 'zip' }
     }
   },
@@ -518,48 +517,30 @@ export const SUPPORTED_MATRIX = {
     csv:   ['csv','json','html','xlsx'],
     ods:   ['csv','json','html','xlsx'],
     txt:   ['txt','md','html','pdf','docx'],
-    md:    ['txt','md','html','pdf','docx','doc'],
-    html:  ['txt','md','html','docx'],
-    pdf:   [],
-    doc:   [],
-    rtf:   [],
-    odt:   [],
-    pages: [],
-    ppt:   [],
-    pptx:  [],
-    odp:   [],
-    key:   [],
-    xlsm:  []
+    md:    ['txt','md','html','pdf','docx'],
+    html:  ['txt','md','html','docx']
   },
   image: {
-    jpg:   ['png','jpg','webp','gif','bmp'],
-    jpeg:  ['png','jpg','webp','gif','bmp'],
-    png:   ['png','jpg','webp','gif','bmp'],
-    gif:   ['png','jpg','webp','gif','bmp'],
-    bmp:   ['png','jpg','webp','gif','bmp'],
-    webp:  ['png','jpg','webp','gif','bmp'],
-    tiff:  ['png','jpg','webp','gif','bmp'],
-    tif:   ['png','jpg','webp','gif','bmp'],
-    svg:   ['png','jpg','webp','bmp'],
-    heic:  [],
-    avif:  []
+    jpg:   ['png','jpg','webp','gif'],
+    jpeg:  ['png','jpg','webp','gif'],
+    png:   ['png','jpg','webp','gif'],
+    gif:   ['png','jpg','webp','gif'],
+    webp:  ['png','jpg','webp','gif'],
+    svg:   ['png','jpg','webp']
   },
   ebook: {
-    epub:  ['txt','html'],
+    epub:  ['txt','html','pdf'],
     mobi:  ['txt'],
     azw3:  ['txt'],
-    pdf:   []
+    pdf:   ['epub','txt','html']
   },
   data: {
-    json:  ['json','xml','csv','yaml','toml'],
-    xml:   ['json','xml','csv','yaml','toml'],
-    csv:   ['json','xml','csv','yaml','toml'],
-    yaml:  ['json','xml','csv','yaml','toml'],
-    yml:   ['json','xml','csv','yaml','toml'],
-    toml:  ['json','xml','csv','yaml','toml'],
-    zip:   ['zip'],
-    rar:   [],
-    '7z':  []
+    json:  ['json','xml','csv','yaml'],
+    xml:   ['json','xml','csv','yaml'],
+    csv:   ['json','xml','csv','yaml'],
+    yaml:  ['json','xml','csv','yaml'],
+    yml:   ['json','xml','csv','yaml'],
+    zip:   ['zip']
   }
 };
 
