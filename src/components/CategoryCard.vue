@@ -28,8 +28,6 @@ defineProps({ cat: Object })
 .cat-icon { font-size: 1.75rem; margin-bottom: 8px; }
 .cat-name { font-size: 0.875rem; font-weight: 500; color: var(--text-primary); }
 .cat-count { font-size: 0.75rem; color: var(--text-tertiary); margin-top: 2px; }
-</style>
-
 :global(.grid-list) .cat-card {
   display: flex;
   align-items: center;
@@ -39,3 +37,4 @@ defineProps({ cat: Object })
 }
 :global(.grid-list) .cat-icon { margin-bottom: 0; }
 :global(.grid-list) .cat-count { margin-left: auto; margin-top: 0; }
+</style>
