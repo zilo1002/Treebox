@@ -8,6 +8,55 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>Treebox</title>
+    <!-- FormatHub 依赖：Tailwind（关闭 preflight 以免影响 Treebox 全局样式）+ JSZip + 按需库加载器 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = { corePlugins: { preflight: false } }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+      window._scriptLoader = {
+        loaded: new Set(),
+        loading: new Map(),
+        load(url) {
+          if (this.loaded.has(url)) return Promise.resolve();
+          if (this.loading.has(url)) return this.loading.get(url);
+          const promise = new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = url;
+            s.onload = () => { this.loaded.add(url); this.loading.delete(url); resolve(); };
+            s.onerror = () => reject(new Error('Failed to load ' + url));
+            document.head.appendChild(s);
+          });
+          this.loading.set(url, promise);
+          return promise;
+        },
+        async loadBatch(urls) {
+          await Promise.all(urls.map(u => this.load(u)));
+        },
+        isReady(catId) {
+          const libs = window._CATEGORY_LIBS[catId] || [];
+          return libs.every(u => this.loaded.has(u));
+        }
+      };
+      window._CATEGORY_LIBS = {
+        document: [
+          'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',
+          'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+          'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+          'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+          'https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js'
+        ],
+        data: [],
+        image: [],
+        ebook: [],
+        archive: [],
+        pdf: [
+          'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js',
+          'https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js'
+        ]
+      };
+    </script>
   </head>
   <body>
     <div id="app"></div>
