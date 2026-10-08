@@ -864,7 +864,7 @@ function prevStep() {
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-secondary);
 }
 .step-item.active {
@@ -883,7 +883,7 @@ function prevStep() {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 .step-item.active .step-num {
@@ -899,12 +899,12 @@ function prevStep() {
   box-shadow: 0 2px 12px var(--shadow);
 }
 .step-panel h3 {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   margin-bottom: 4px;
 }
 .hint {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-tertiary);
   margin-bottom: 16px;
 }
@@ -923,13 +923,13 @@ function prevStep() {
   border-color: var(--accent);
   background: var(--bg-muted);
 }
-.upload-icon { font-size: 32px; margin-bottom: 8px; }
-.upload-text { font-size: 14px; color: var(--text-secondary); }
-.upload-types { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+.upload-icon { font-size: 2rem; margin-bottom: 8px; }
+.upload-text { font-size: 0.875rem; color: var(--text-secondary); }
+.upload-types { font-size: 0.75rem; color: var(--text-tertiary); margin-top: 4px; }
 
 .or-divider {
   text-align: center;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
   margin: 12px 0;
   position: relative;
@@ -951,7 +951,7 @@ function prevStep() {
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.6;
   resize: vertical;
   font-family: inherit;
@@ -968,7 +968,7 @@ function prevStep() {
   flex-wrap: wrap;
 }
 .ref-format-bar label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-secondary);
   white-space: nowrap;
   flex-shrink: 0;
@@ -977,7 +977,7 @@ function prevStep() {
   padding: 6px 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   background: var(--bg-raised);
   color: var(--text-primary);
   max-width: 100%;
@@ -1001,7 +1001,7 @@ function prevStep() {
   .cite-textarea,
   .btn-auto-cite,
   .btn-parse {
-    font-size: 16px;
+    font-size: 1rem;
     padding: 10px 12px;
   }
   .ref-brief {
@@ -1033,7 +1033,7 @@ function prevStep() {
   margin-bottom: 8px;
 }
 .ref-index {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--accent);
 }
@@ -1045,7 +1045,7 @@ function prevStep() {
   background: transparent;
   color: var(--text-tertiary);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 .ref-del:hover { background: #ffeaea; color: #e74c3c; }
 .ref-paste-area {
@@ -1053,7 +1053,7 @@ function prevStep() {
 }
 .paste-label {
   display: block;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 8px;
@@ -1063,7 +1063,7 @@ function prevStep() {
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.7;
   background: var(--bg-raised);
   color: var(--text-primary);
@@ -1079,7 +1079,7 @@ function prevStep() {
   border-radius: 10px;
   background: transparent;
   color: var(--accent);
-  font-size: 14px;
+  font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.15s;
   font-family: inherit;
@@ -1092,14 +1092,14 @@ function prevStep() {
   color: var(--text-tertiary);
 }
 .parse-hint {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
   margin-top: 8px;
   text-align: center;
 }
 .ref-brief {
   flex: 1;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1121,7 +1121,7 @@ function prevStep() {
   border-radius: 10px;
   background: transparent;
   color: var(--accent);
-  font-size: 13px;
+  font-size: 0.8125rem;
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -1146,7 +1146,7 @@ function prevStep() {
 .pane-header {
   padding: 10px 12px;
   background: var(--bg-muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text-secondary);
   display: flex;
@@ -1157,7 +1157,7 @@ function prevStep() {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: 0.75rem;
   cursor: pointer;
 }
 .rich-editor {
@@ -1165,7 +1165,7 @@ function prevStep() {
   min-height: 300px;
   max-height: 500px;
   overflow-y: auto;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.8;
   color: var(--text-primary);
 }
@@ -1184,7 +1184,7 @@ function prevStep() {
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .ref-quick-item:hover { background: var(--bg-muted); }
 .ref-quick-item.disabled { opacity: 0.4; pointer-events: none; }
@@ -1197,7 +1197,7 @@ function prevStep() {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 0.6875rem;
   flex-shrink: 0;
 }
 .ref-quick-title {
@@ -1216,7 +1216,7 @@ function prevStep() {
   border-radius: 6px;
   background: var(--bg-raised);
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 0.75rem;
   cursor: pointer;
   margin-right: 6px;
   margin-bottom: 6px;
@@ -1235,7 +1235,7 @@ function prevStep() {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .caption-item input,
 .footnote-item input {
@@ -1243,7 +1243,7 @@ function prevStep() {
   padding: 4px 8px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 0.75rem;
   background: var(--bg);
   color: var(--text-primary);
 }
@@ -1253,7 +1253,7 @@ function prevStep() {
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--bg-raised);
-  font-size: 11px;
+  font-size: 0.6875rem;
   cursor: pointer;
   color: var(--text-secondary);
 }
@@ -1270,7 +1270,7 @@ function prevStep() {
   border-radius: 8px;
   background: var(--bg-muted);
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 0.8125rem;
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -1283,7 +1283,7 @@ function prevStep() {
   padding: 20px;
   background: var(--bg-raised);
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.8;
   min-height: 200px;
 }
@@ -1292,7 +1292,7 @@ function prevStep() {
   padding: 16px;
   background: var(--bg-raised);
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.8;
 }
 .preview-refs li { margin-bottom: 6px; }
@@ -1311,7 +1311,7 @@ function prevStep() {
   padding: 10px 20px;
   border-radius: 10px;
   border: none;
-  font-size: 14px;
+  font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.15s;
   font-family: inherit;
@@ -1338,7 +1338,7 @@ function prevStep() {
 
 /* 题注标签 */
 .cap-tag {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--accent);
   background: var(--bg-muted);
@@ -1354,7 +1354,7 @@ function prevStep() {
   background: transparent;
   color: var(--text-tertiary);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 0.75rem;
   flex-shrink: 0;
 }
 .cap-del:hover { background: #ffeaea; color: #e74c3c; }
@@ -1371,7 +1371,7 @@ function prevStep() {
 .crossref-empty {
   padding: 12px;
   text-align: center;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
   background: var(--bg-muted);
   border-radius: 8px;
@@ -1386,14 +1386,14 @@ function prevStep() {
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .crossref-item:hover {
   border-color: var(--accent);
   background: var(--bg-muted);
 }
 .crossref-tag {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: #fff;
   background: var(--accent);
@@ -1410,7 +1410,7 @@ function prevStep() {
   color: var(--text-primary);
 }
 .crossref-hint {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--text-tertiary);
   white-space: nowrap;
   flex-shrink: 0;
@@ -1424,7 +1424,7 @@ function prevStep() {
   border-radius: 10px;
   padding: 10px 14px;
   margin-bottom: 16px;
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.7;
   color: var(--text-secondary);
 }
@@ -1439,13 +1439,13 @@ function prevStep() {
   border-radius: 10px;
   padding: 12px 14px;
   margin-bottom: 16px;
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.7;
   color: var(--text-secondary);
 }
 .usage-tip strong {
   color: var(--accent);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 .usage-tip ol {
   margin: 6px 0 0 16px;
@@ -1462,7 +1462,7 @@ function prevStep() {
   padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   background: var(--bg);
   color: var(--text-primary);
   font-family: inherit;
@@ -1479,7 +1479,7 @@ function prevStep() {
   border-radius: 8px;
   background: transparent;
   color: var(--accent);
-  font-size: 13px;
+  font-size: 0.8125rem;
   cursor: pointer;
   transition: all 0.15s;
   font-family: inherit;
