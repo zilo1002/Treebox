@@ -1,70 +1,182 @@
-/* FormatHub 原有样式，作用域限制在 .formathub-root 内，避免影响 Treebox 全局 */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* FormatHub — unified with Treebox tool styles
+   Uses Treebox CSS variables so background / text / border / accent
+   automatically follow light, dark and custom theme settings.
+   No large dark slabs.
+*/
 
 .formathub-root {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: inherit;
   -webkit-tap-highlight-color: transparent;
   min-height: 100%;
-  color: #f1f5f9;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
 }
+
+/* ---- Map FormatHub's old dark slate utilities to Treebox light surfaces ---- */
+/* Cards / panels */
+.formathub-root .bg-slate-950,
+.formathub-root .bg-slate-900\/90 {
+  background-color: var(--bg);
+}
+.formathub-root .bg-slate-900\/50,
+.formathub-root .bg-slate-900\/30,
+.formathub-root .bg-slate-800\/15,
+.formathub-root .bg-slate-800\/20 {
+  background-color: var(--bg-muted);
+}
+.formathub-root .bg-slate-800,
+.formathub-root .bg-slate-800\/30,
+.formathub-root .bg-slate-800\/40,
+.formathub-root .bg-slate-800\/50,
+.formathub-root .bg-slate-800\/60 {
+  background-color: var(--bg-raised);
+}
+.formathub-root .bg-slate-700,
+.formathub-root .bg-slate-700\/20,
+.formathub-root .bg-slate-700\/40,
+.formathub-root .bg-slate-600 {
+  background-color: var(--bg-strong);
+}
+
+/* Hover states for cards that were dark */
+.formathub-root .hover\:bg-slate-800\/50:hover,
+.formathub-root .hover\:bg-slate-700\/40:hover {
+  background-color: var(--bg-muted);
+}
+
+/* Text */
+.formathub-root .text-slate-100,
+.formathub-root .text-slate-200,
+.formathub-root .text-slate-300 {
+  color: var(--text-primary);
+}
+.formathub-root .text-slate-400 {
+  color: var(--text-secondary);
+}
+.formathub-root .text-slate-500,
+.formathub-root .text-slate-600 {
+  color: var(--text-tertiary);
+}
+
+/* Borders */
+.formathub-root .border-slate-800,
+.formathub-root .border-slate-700,
+.formathub-root .border-slate-700\/20,
+.formathub-root .border-slate-700\/30,
+.formathub-root .border-slate-700\/40,
+.formathub-root .border-slate-700\/50,
+.formathub-root .border-slate-600 {
+  border-color: var(--border);
+}
+
+/* Category accent text — darken 400-level for light background contrast */
+.formathub-root .text-blue-400 { color: #2563eb; }
+.formathub-root .text-cyan-400 { color: #0891b2; }
+.formathub-root .text-purple-400 { color: #9333ea; }
+.formathub-root .text-amber-400 { color: #d97706; }
+.formathub-root .text-emerald-400 { color: #059669; }
+.formathub-root .text-red-400 { color: #dc2626; }
+
+/* Glass header — follow Treebox glass variables instead of dark blur */
 .formathub-root .glass {
-  background: rgba(30, 41, 59, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--glass);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-color: var(--border);
 }
+
+/* Drop zone */
 .formathub-root .drop-active {
-  border-color: #06b6d4 !important;
-  background: rgba(6, 182, 212, 0.08) !important;
+  border-color: var(--accent) !important;
+  background: var(--bg-muted) !important;
 }
+
+/* Progress */
 .formathub-root .progress-bar {
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--accent);
 }
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(12px); }
+
+/* Animations */
+@keyframes fh-slideIn {
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .formathub-root .slide-in {
-  animation: slideIn 0.35s ease forwards;
+  animation: fh-slideIn 0.25s ease forwards;
 }
+.formathub-root .view-enter { animation: fh-slideIn 0.25s ease; }
+
+/* Select — match Treebox inputs: muted bg, border var, radius */
 .formathub-root select {
   -webkit-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-color: var(--bg-muted);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2399999f'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.6rem center;
   background-size: 1rem;
 }
-.formathub-root ::-webkit-scrollbar { width: 5px; }
+.formathub-root select:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* Inputs / textareas inside FormatHub pages */
+.formathub-root input[type="text"],
+.formathub-root input[type="url"],
+.formathub-root textarea {
+  background: var(--bg-muted);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.formathub-root input:focus,
+.formathub-root textarea:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* Scrollbar — same thin style as Treebox */
+.formathub-root ::-webkit-scrollbar { width: 4px; }
 .formathub-root ::-webkit-scrollbar-track { background: transparent; }
-.formathub-root ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-.formathub-root .view-enter { animation: slideIn 0.3s ease; }
+.formathub-root ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Language toggle — Treebox secondary button style */
 .formathub-root .lang-btn {
-  padding: 4px 10px;
+  padding: 6px 12px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid transparent;
+  transition: all 0.15s;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--text-secondary);
 }
 .formathub-root .lang-btn.active {
-  background: rgba(6, 182, 212, 0.15);
-  color: #22d3ee;
-  border-color: rgba(6, 182, 212, 0.3);
-}
-.formathub-root .lang-btn:not(.active) {
-  color: #94a3b8;
-  border-color: rgba(148, 163, 184, 0.2);
+  background: var(--bg-muted);
+  color: var(--accent);
+  border-color: var(--accent);
 }
 .formathub-root .lang-btn:not(.active):hover {
-  background: rgba(148, 163, 184, 0.1);
+  background: var(--bg-muted);
+  opacity: 0.9;
 }
+
+/* Range slider — accent thumb, muted track like other Treebox tools */
 .formathub-root .range-slider {
   -webkit-appearance: none;
+  appearance: none;
   width: 100%;
   height: 4px;
   border-radius: 2px;
-  background: #334155;
+  background: var(--bg-strong);
   outline: none;
 }
 .formathub-root .range-slider::-webkit-slider-thumb {
@@ -72,30 +184,46 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #06b6d4;
+  background: var(--accent);
   cursor: pointer;
-  box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
+  border: none;
 }
 .formathub-root .range-slider::-moz-range-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #06b6d4;
+  background: var(--accent);
   cursor: pointer;
   border: none;
-  box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
 }
-.formathub-root .paste-hint {
-  animation: pulseHint 2s ease-in-out infinite;
-}
-@keyframes pulseHint {
+
+/* Paste hint */
+@keyframes fh-pulseHint {
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
 }
-.formathub-root .merge-area {
-  border: 1px dashed rgba(6, 182, 212, 0.3);
-  background: rgba(6, 182, 212, 0.03);
+.formathub-root .paste-hint {
+  animation: fh-pulseHint 2s ease-in-out infinite;
+  color: var(--text-tertiary);
 }
+
+/* Merge area — dashed muted panel like upload areas in other tools */
+.formathub-root .merge-area {
+  border: 1px dashed var(--border);
+  background: var(--bg-muted);
+  border-radius: var(--radius);
+}
+
+/* Cards that FormatHub renders as links — keep Treebox card feel */
+.formathub-root a[class*="rounded-2xl"] {
+  border-radius: var(--radius);
+  box-shadow: none;
+}
+.formathub-root a[class*="rounded-2xl"]:hover {
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+/* Responsive helpers */
 @media (max-width: 640px) {
   .formathub-root .responsive-grid { grid-template-columns: 1fr !important; }
   .formathub-root .responsive-flex { flex-direction: column !important; gap: 8px !important; }
