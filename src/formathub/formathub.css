@@ -79,7 +79,7 @@
 .formathub-root .text-emerald-400 { color: #059669; }
 .formathub-root .text-red-400 { color: #dc2626; }
 
-/* Glass header — follow Treebox glass variables instead of dark blur */
+/* Glass — kept for other panels, but header overrides it below to stay opaque */
 .formathub-root .glass {
   background: var(--glass);
   backdrop-filter: blur(var(--glass-blur));
@@ -87,20 +87,26 @@
   border-color: var(--border);
 }
 
-/* Sticky title bar for each FormatHub branch tool (mobile)
+/* Fixed title bar for each FormatHub branch tool
    Treebox scrolls inside .app-content (padding:16px), so offset -16px
-   makes the bar sit flush under the main AppHeader instead of scrolling away.
-   Not relying on Tailwind's sticky class generation for dynamically inserted HTML.
+   makes the bar sit flush under the main AppHeader.
+   Header must be opaque, not glass/transparent — otherwise content
+   scrolling underneath shows through and looks like it is moving / blocking.
 */
-.formathub-root header {
+.formathub-root header,
+.formathub-root header.glass {
+  position: -webkit-sticky;
   position: sticky;
   top: -16px;
-  z-index: 40;
-  background: var(--bg);
+  z-index: 50;
+  background: var(--bg) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   border-bottom: 1px solid var(--border);
 }
 @media (max-width: 640px) {
-  .formathub-root header {
+  .formathub-root header,
+  .formathub-root header.glass {
     top: -16px;
   }
 }
@@ -117,15 +123,19 @@
   background: var(--accent);
 }
 
-/* Animations */
+/* Animations — page wrapper must not transform, otherwise sticky header moves with it on mobile */
 @keyframes fh-slideIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+@keyframes fh-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 .formathub-root .slide-in {
   animation: fh-slideIn 0.25s ease forwards;
 }
-.formathub-root .view-enter { animation: fh-slideIn 0.25s ease; }
+.formathub-root .view-enter { animation: fh-fadeIn 0.2s ease; }
 
 /* Select — match Treebox inputs: muted bg, border var, radius */
 .formathub-root select {
