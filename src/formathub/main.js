@@ -691,7 +691,8 @@ function handleFiles(fileList, catId) {
     if (f.size > MAX_SIZE) { toast('⚠️', '「'+f.name+'」'+t('maxSize')); return; }
     const e = getExt(f.name);
     if (!cat.exts.includes(e)) { toast('⚠️', '「'+f.name+'」'+t('notSupported')); return; }
-    const item = { file: f, id: Date.now()+Math.random(), status: 'pending', progress: 0, target: Object.keys(cat.targets)[0], preview: null, customName: '', selected: true, convertedBlob: null, convertedName: '' };
+    const supported0 = getSupportedTargets(catId, f.name);
+    const item = { file: f, id: Date.now()+Math.random(), status: 'pending', progress: 0, target: supported0[0] || Object.keys(cat.targets)[0], preview: null, customName: '', selected: true, convertedBlob: null, convertedName: '' };
     files.push(item);
     generatePreview(item, catId);
   });
@@ -943,7 +944,7 @@ function renderFiles(catId) {
       selectHtml = '<select id="t-' + idx + '" onchange="window.chgTarget(' + idx + ',this.value)" class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:border-' + cat.color + '-500 focus:outline-none text-slate-200 pr-8">' + options + '</select>';
     }
 
-    const defaultName = f.name.replace(/\.[^.]+$/i, '.' + (cat.targets[item.target] ? cat.targets[item.target].ext : item.target));
+    const defaultName = item.target === 'extract' ? f.name : f.name.replace(/\.[^.]+$/i, '.' + (cat.targets[item.target] ? cat.targets[item.target].ext : item.target));
     const customNameVal = item.customName || defaultName;
 
     // 操作按钮（转换完成后显示）
@@ -1256,6 +1257,12 @@ function showExtractModal(entries) {
   modal.classList.remove('hidden'); modal.classList.add('flex');
   window._extracted = entries;
   let html = '';
+  if (!entries.length) {
+    html = '<p class="text-xs text-slate-400 p-2">' + (getLang() === 'en' ? 'This ZIP contains no files.' : '这个 ZIP 里没有文件。') + '</p>';
+  } else {
+    const totalSize = entries.reduce((a, e) => a + (e.size || 0), 0);
+    html += '<p class="text-[11px] text-slate-400 px-1 pb-1">' + (getLang() === 'en' ? entries.length + ' files · ' + fmtSize(totalSize) + ' uncompressed · tap to download each' : '共 ' + entries.length + ' 个文件 · 解压后 ' + fmtSize(totalSize) + ' · 点每个文件单独下载') + '</p>';
+  }
   for (let i=0; i<entries.length; i++) {
     const e = entries[i];
     html += '<div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-700/20 hover:bg-slate-700/40 transition-colors">'+
