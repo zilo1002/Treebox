@@ -47,7 +47,8 @@ export function useTheme() {
       root.style.setProperty('--glass-blur', '14px')
       root.style.setProperty('--glass-border', dark ? 'rgba(255,255,255,0.06)' : 'rgba(53,107,87,0.08)')
     } else {
-      root.style.setProperty('--glass', 'transparent')
+      // 关掉时给实色打底，不然顶栏 / 底栏会透出背后的背景图
+      root.style.setProperty('--glass', dark ? '#232F27' : '#FAFBF7')
       root.style.setProperty('--glass-blur', '0px')
       root.style.setProperty('--glass-border', 'transparent')
     }

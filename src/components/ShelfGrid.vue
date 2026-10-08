@@ -34,7 +34,7 @@ const gridClass = computed(() => {
   justify-content: space-between;
   margin-bottom: 10px;
 }
-.shelf-title { font-size: 15px; font-weight: 500; color: var(--text-primary); }
+.shelf-title { font-size: 0.9375rem; font-weight: 500; color: var(--text-primary); }
 
 .tool-grid {
   display: grid;

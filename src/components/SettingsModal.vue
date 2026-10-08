@@ -165,7 +165,7 @@ const { locale } = useI18n()
 const visible = ref(false)
 const fileInput = ref(null)
 
-const colors = ['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#6366f1']
+const colors = ['#356B57','#6B8F71','#C98A4B','#C1664A','#8A739E','#5A7D8A','#3b82f6','#ef4444']
 
 const eyeColors = [
   { name: '豆沙绿', hex: '#C7EDCC' },
@@ -262,7 +262,7 @@ onUnmounted(() => {
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-.modal-header h2 { font-size: 17px; font-weight: 500; }
+.modal-header h2 { font-size: 1.0625rem; font-weight: 500; }
 .icon-btn {
   width: 32px; height: 32px;
   border-radius: 50%;
@@ -283,7 +283,7 @@ onUnmounted(() => {
 .setting-group { margin-bottom: 20px; }
 .setting-group label {
   display: block;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   margin-bottom: 8px;
   color: var(--text-secondary);
@@ -304,14 +304,14 @@ onUnmounted(() => {
   border-radius: 6px;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 0.8125rem;
   cursor: pointer;
   transition: all 0.15s;
   font-family: inherit;
 }
 .seg-btn.active {
   background: var(--bg);
-  color: var(--text-primary);
+  color: var(--accent);
   font-weight: 500;
   box-shadow: 0 1px 3px var(--shadow);
 }
@@ -346,7 +346,7 @@ onUnmounted(() => {
 }
 .custom-color-row span {
   width: 70px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-secondary);
   flex-shrink: 0;
 }
@@ -363,7 +363,7 @@ onUnmounted(() => {
 .custom-color-row input[type="color"]::-webkit-color-swatch { border-radius: 8px; border: 2px solid var(--border); }
 .reset-btn {
   padding: 4px 10px;
-  font-size: 12px;
+  font-size: 0.75rem;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--bg-raised);
@@ -393,7 +393,7 @@ onUnmounted(() => {
 .eye-care-btn:hover { transform: scale(1.05); }
 .eye-care-btn.active { border-color: var(--accent); }
 .eye-care-name {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 500;
   color: rgba(0,0,0,0.5);
   text-shadow: 0 1px 2px rgba(255,255,255,0.6);
@@ -412,7 +412,7 @@ onUnmounted(() => {
   border-radius: 10px;
   background: var(--bg-raised);
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 0.8125rem;
   cursor: pointer;
   font-family: inherit;
 }

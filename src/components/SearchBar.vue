@@ -54,7 +54,9 @@ function close() {
   gap: 8px;
   padding: 8px 14px;
   border-bottom: 1px solid var(--border);
-  background: var(--bg);
+  background: var(--glass);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   flex-shrink: 0;
 }
 .search-bar input {
@@ -64,7 +66,7 @@ function close() {
   border: 1px solid var(--border);
   background: var(--bg-muted);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 0.875rem;
   outline: none;
 }
 .search-bar input:focus { border-color: var(--accent); }

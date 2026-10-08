@@ -58,14 +58,16 @@ function showSettings() { document.getElementById('settings-modal')?.dispatchEve
   justify-content: space-between;
   padding: 10px 14px;
   border-bottom: 1px solid var(--border);
-  background: var(--bg);
+  background: var(--glass);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   position: sticky;
   top: 0;
   z-index: 10;
   flex-shrink: 0;
 }
 .app-header h1 {
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 500;
   flex: 1;
   text-align: center;

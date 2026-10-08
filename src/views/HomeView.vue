@@ -1,7 +1,7 @@
 <!-- HomeView.vue -->
 <template>
   <div class="home-view">
-    <div class="cat-grid">
+    <div class="cat-grid" :class="`grid-${store.grid.replace('x', '')}`">
       <CategoryCard v-for="cat in store.categories" :key="cat.id" :cat="cat" />
     </div>
   </div>
@@ -22,7 +22,9 @@ const store = useAppStore()
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
 }
-@media (min-width: 640px) { .cat-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 900px) { .cat-grid { grid-template-columns: repeat(4, 1fr); } }
+/* 书架布局同样管首页分类架：3x3 / 4x4 / 列表 */
+.cat-grid.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.cat-grid.grid-4 { grid-template-columns: repeat(4, 1fr); }
+.cat-grid.grid-list { grid-template-columns: 1fr; }
 
 </style>

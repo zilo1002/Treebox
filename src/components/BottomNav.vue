@@ -34,7 +34,9 @@ function isActive(path) {
   justify-content: space-around;
   padding: 6px 0 8px;
   border-top: 1px solid var(--border);
-  background: var(--bg);
+  background: var(--glass);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   position: sticky;
   bottom: 0;
   flex-shrink: 0;
@@ -48,7 +50,7 @@ function isActive(path) {
   padding: 4px 16px;
   text-decoration: none;
   color: var(--text-tertiary);
-  font-size: 11px;
+  font-size: 0.6875rem;
   transition: color 0.15s;
 }
 .nav-item.active { color: var(--accent); }
