@@ -75,3 +75,11 @@ html, body {
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 }
+
+/* 毛玻璃开时，卡片也一起糊（关时保持实色） */
+body.glass-on .tool-card,
+body.glass-on .cat-card {
+  background: var(--glass);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}

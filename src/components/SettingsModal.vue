@@ -269,7 +269,9 @@ onUnmounted(() => {
 .modal-panel {
   width: 100%; max-width: 480px;
   max-height: 85vh;
-  background: var(--bg);
+  background: var(--glass);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   border-radius: 16px 16px 0 0;
   overflow: hidden;
   display: flex;

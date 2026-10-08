@@ -41,6 +41,8 @@ export function useTheme() {
       root.style.setProperty('--nav-bg', bgRaised)
     }
 
+    document.body.classList.toggle('glass-on', !!store.enableGlass)
+
     // 毛玻璃
     if (store.enableGlass) {
       root.style.setProperty('--glass', dark ? 'rgba(35,47,39,0.65)' : 'rgba(250,251,247,0.68)')
