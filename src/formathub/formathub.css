@@ -1,0 +1,102 @@
+/* FormatHub 原有样式，作用域限制在 .formathub-root 内，避免影响 Treebox 全局 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+.formathub-root {
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 100%;
+  color: #f1f5f9;
+}
+.formathub-root .glass {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.formathub-root .drop-active {
+  border-color: #06b6d4 !important;
+  background: rgba(6, 182, 212, 0.08) !important;
+}
+.formathub-root .progress-bar {
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.formathub-root .slide-in {
+  animation: slideIn 0.35s ease forwards;
+}
+.formathub-root select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 1rem;
+}
+.formathub-root ::-webkit-scrollbar { width: 5px; }
+.formathub-root ::-webkit-scrollbar-track { background: transparent; }
+.formathub-root ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+.formathub-root .view-enter { animation: slideIn 0.3s ease; }
+.formathub-root .lang-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+.formathub-root .lang-btn.active {
+  background: rgba(6, 182, 212, 0.15);
+  color: #22d3ee;
+  border-color: rgba(6, 182, 212, 0.3);
+}
+.formathub-root .lang-btn:not(.active) {
+  color: #94a3b8;
+  border-color: rgba(148, 163, 184, 0.2);
+}
+.formathub-root .lang-btn:not(.active):hover {
+  background: rgba(148, 163, 184, 0.1);
+}
+.formathub-root .range-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: #334155;
+  outline: none;
+}
+.formathub-root .range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #06b6d4;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
+}
+.formathub-root .range-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #06b6d4;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
+}
+.formathub-root .paste-hint {
+  animation: pulseHint 2s ease-in-out infinite;
+}
+@keyframes pulseHint {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+.formathub-root .merge-area {
+  border: 1px dashed rgba(6, 182, 212, 0.3);
+  background: rgba(6, 182, 212, 0.03);
+}
+@media (max-width: 640px) {
+  .formathub-root .responsive-grid { grid-template-columns: 1fr !important; }
+  .formathub-root .responsive-flex { flex-direction: column !important; gap: 8px !important; }
+}
