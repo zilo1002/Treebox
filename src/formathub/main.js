@@ -8,7 +8,7 @@ import { convData } from './converters/data.js';
 import { convDoc, mergeDocs } from './converters/document.js';
 import { convArchive } from './converters/archive.js';
 import { convEbook } from './converters/ebook.js';
-import { splitPDF, mergePDF, watermarkPDF } from './converters/pdf.js';
+import { splitPDF, mergePDF, watermarkPDF, encryptPDF } from './converters/pdf.js';
 import { formatJSON } from './converters/format.js';
 import { parseGitHubUrl, isGitHubUrl, checkRateLimit, downloadGitHubFile, downloadGitHubFolder, downloadGitHubFolderFlat, parseReleaseUrl, isReleaseUrl, fetchReleases, downloadReleaseAsset, getDefaultBranch } from './converters/github.js';
 import { parseGiteeUrl, isGiteeUrl, downloadGiteeFile, downloadGiteeFolder, downloadGiteeFolderFlat, getGiteeDefaultBranch } from './converters/gitee.js';
@@ -26,7 +26,7 @@ let lockedView = null; // Treebox 子工具模式：锁定到初始分支，不�
 let githubAbortController = null;
 let pdfTool = 'split'; // 'split' | 'merge' | 'watermark'
 let pdfToolFiles = [];
-let pdfOpts = { range: '', watermarkText: '', fontSize: 36, opacity: 0.3, position: 'center', rotation: -30 };
+let pdfOpts = { range: '', watermarkText: '', fontSize: 36, opacity: 0.3, position: 'center', rotation: -30, password: '' };
 let pdfResult = null; // { blob, name, info }
 let githubPlatform = 'github'; // 'github' | 'gitee'
 let releaseAssets = [];
@@ -178,6 +178,7 @@ function renderPdfToolboxPage(cat) {
     { id: 'split', label: t('pdfSplit'), icon: '✂️' },
     { id: 'merge', label: t('pdfMerge'), icon: '🧩' },
     { id: 'watermark', label: t('pdfWatermark'), icon: '💧' },
+    { id: 'encrypt', label: t('pdfEncrypt'), icon: '🔒' },
   ];
   const toolBtns = tools.map(tool =>
     '<button onclick="window.setPdfTool(\'' + tool.id + '\')" class="flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all ' +
@@ -206,9 +207,13 @@ function renderPdfToolboxPage(cat) {
         '<div><label class="text-[10px] text-slate-500 block mb-1">' + t('rotation') + '</label><input type="number" value="' + pdfOpts.rotation + '" oninput="window.updatePdfOpt(\'rotation\', this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-200"></div>' +
       '</div>' +
       '<p class="text-[10px] text-slate-500">' + t('watermarkHint') + '</p></div>';
+  } else if (pdfTool === 'encrypt') {
+    optionsHtml = '<div class="space-y-2">' +
+      '<label class="text-xs text-slate-400 block">' + t('password') + '</label>' +
+      '<input type="password" autocomplete="new-password" oninput="window.updatePdfOpt(\'password\', this.value)" placeholder="' + t('enterPassword') + '" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">' +
+      '<p class="text-[10px] text-slate-500">AES-256 · 打开文件时需要这个密码，丢了无法找回 · 加密库约 1.3MB，只在加密时加载</p></div>';
   }
-
-  const actionLabel = pdfTool === 'split' ? t('split') : (pdfTool === 'merge' ? t('merge') : t('applyWatermark'));
+  const actionLabel = pdfTool === 'split' ? t('split') : (pdfTool === 'merge' ? t('merge') : (pdfTool === 'encrypt' ? t('applyEncrypt') : t('applyWatermark')));
 
   app.innerHTML = '<div class="min-h-screen bg-slate-950 view-enter">' +
     '<header class="border-b border-slate-800 glass sticky top-0 z-50">' +
@@ -320,6 +325,13 @@ window.runPdfTool = async function() {
         rotation: parseInt(pdfOpts.rotation, 10) || 0,
       });
       pdfResult = { blob, name: file.name.replace(/\.[^.]+$/, '') + '_watermark.pdf', info: '' };
+    } else if (pdfTool === 'encrypt') {
+      if (!pdfToolFiles.length) throw new Error(t('noFiles'));
+      if (!pdfOpts.password) throw new Error(t('enterPassword'));
+      const file = pdfToolFiles[0];
+      const blob = await encryptPDF(file, pdfOpts.password);
+      pdfOpts.password = '';
+      pdfResult = { blob, name: file.name.replace(/\.[^.]+$/, '') + '_encrypted.pdf', info: 'AES-256' };
     }
     renderPdfResultArea();
     toast('✅', t('done'));
