@@ -28,6 +28,7 @@ let pdfTool = 'split'; // 'split' | 'merge' | 'watermark'
 let pdfToolFiles = [];
 let pdfOpts = { range: '', watermarkText: '', fontSize: 36, opacity: 0.3, position: 'center', rotation: -30, password: '' };
 let pdfResult = null; // { blob, name, info }
+let pdfPageCounts = new Map(); // File -> 页数(number) | 'loading' | 'unknown'
 let githubPlatform = 'github'; // 'github' | 'gitee'
 let releaseAssets = [];
 
@@ -254,6 +255,7 @@ function renderPdfToolboxPage(cat) {
       pdfResult = null;
       renderPdfFileList();
       renderPdfResultArea();
+      updatePdfPageCounts();
       e.target.value = '';
     });
   }
@@ -261,19 +263,64 @@ function renderPdfToolboxPage(cat) {
   renderPdfResultArea();
 }
 
+async function updatePdfPageCounts() {
+  const pending = pdfToolFiles.filter(f => !pdfPageCounts.has(f));
+  if (!pending.length) return;
+  for (const f of pending) pdfPageCounts.set(f, 'loading');
+  renderPdfFileList();
+  try { await ensureLibsReady('pdf'); } catch { /* 库加载失败时下面会逐个标 unknown */ }
+  if (!window.PDFLib) {
+    for (const f of pending) pdfPageCounts.set(f, 'unknown');
+    renderPdfFileList();
+    return;
+  }
+  for (const f of pending) {
+    try {
+      const ab = await readAB(f);
+      const doc = await window.PDFLib.PDFDocument.load(ab, { ignoreEncryption: true });
+      pdfPageCounts.set(f, doc.getPageCount());
+    } catch {
+      pdfPageCounts.set(f, 'unknown');
+    }
+    renderPdfFileList();
+  }
+}
+
 function renderPdfFileList() {
   const el = document.getElementById('pdfFileList');
   if (!el) return;
   if (!pdfToolFiles.length) { el.innerHTML = ''; return; }
-  el.innerHTML = pdfToolFiles.map((f, idx) =>
-    '<div class="flex items-center gap-2 p-3 rounded-xl bg-slate-800/30 border border-slate-700/30">' +
+  const isEn = getLang() === 'en';
+  let html = pdfToolFiles.map((f, idx) => {
+    const pc = pdfPageCounts.get(f);
+    const pageBadge = pc === 'loading' || pc === undefined
+      ? '<span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400">' + (isEn ? 'Counting…' : '页数统计中…') + '</span>'
+      : pc === 'unknown'
+        ? '<span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-500">' + (isEn ? 'Pages unknown' : '页数未知') + '</span>'
+        : '<span class="text-[10px] px-2 py-0.5 rounded bg-red-500/10 border border-red-500/20 text-red-400">' + pc + t('pageCount') + '</span>';
+    return '<div class="flex items-center gap-2 p-3 rounded-xl bg-slate-800/30 border border-slate-700/30">' +
       '<span class="text-xs text-slate-400 w-6">' + (idx + 1) + '.</span>' +
       '<span class="flex-1 text-xs text-slate-200 truncate">' + f.name + '</span>' +
+      pageBadge +
       '<span class="text-[10px] text-slate-500">' + fmtSize(f.size) + '</span>' +
       (pdfTool === 'merge' ? '<button onclick="window.movePdfFile(' + idx + ',-1)" class="text-xs px-2 py-1 rounded bg-slate-700 text-slate-300">↑</button><button onclick="window.movePdfFile(' + idx + ',1)" class="text-xs px-2 py-1 rounded bg-slate-700 text-slate-300">↓</button>' : '') +
       '<button onclick="window.removePdfFile(' + idx + ')" class="text-xs px-2 py-1 rounded bg-slate-700 text-slate-300">' + t('remove') + '</button>' +
-    '</div>'
-  ).join('');
+    '</div>';
+  }).join('');
+  if (pdfTool === 'merge' && pdfToolFiles.length > 1) {
+    const counts = pdfToolFiles.map(f => pdfPageCounts.get(f));
+    if (counts.every(c => typeof c === 'number')) {
+      const total = counts.reduce((a, b) => a + b, 0);
+      html += '<p class="text-[11px] text-slate-400 px-1">' + (isEn ? 'Total: ' : '合计：') + total + t('pageCount') + (isEn ? ' after merge' : '') + '</p>';
+    }
+  }
+  if (pdfTool === 'split' && pdfToolFiles.length) {
+    const pc = pdfPageCounts.get(pdfToolFiles[0]);
+    if (typeof pc === 'number') {
+      html += '<p class="text-[11px] text-slate-400 px-1">' + (isEn ? 'This PDF has ' + pc + ' pages in total, page range e.g. 1-' + Math.min(pc, 5) : '这个 PDF 共 ' + pc + ' 页，页码范围可填如 1-' + Math.min(pc, 5)) + '</p>';
+    }
+  }
+  el.innerHTML = html;
 }
 
 function renderPdfResultArea() {
@@ -288,7 +335,7 @@ function renderPdfResultArea() {
 
 window.setPdfTool = function(tool) { pdfTool = tool; pdfResult = null; render(); };
 window.updatePdfOpt = function(key, value) { pdfOpts[key] = value; };
-window.removePdfFile = function(idx) { pdfToolFiles.splice(idx, 1); pdfResult = null; renderPdfFileList(); renderPdfResultArea(); };
+window.removePdfFile = function(idx) { const removed = pdfToolFiles[idx]; pdfToolFiles.splice(idx, 1); if (removed && !pdfToolFiles.includes(removed)) pdfPageCounts.delete(removed); pdfResult = null; renderPdfFileList(); renderPdfResultArea(); };
 window.movePdfFile = function(idx, dir) {
   const next = idx + dir;
   if (next < 0 || next >= pdfToolFiles.length) return;
