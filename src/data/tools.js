@@ -54,7 +54,7 @@
       { id: 'fh-image', name: '图像与图片', icon: '🖼️', type: 'formathub', view: 'image', desc: 'JPG/PNG/WebP/GIF/SVG 互转' },
       { id: 'fh-ebook', name: '电子书', icon: '📚', type: 'formathub', view: 'ebook', desc: 'EPUB/MOBI/AZW3/PDF 转换' },
       { id: 'fh-data', name: '数据与压缩包', icon: '💾', type: 'formathub', view: 'data', desc: 'JSON/XML/CSV/YAML 互转' },
-      { id: 'fh-pdf', name: 'PDF 工具箱', icon: '📕', type: 'formathub', view: 'pdf', desc: '拆分/合并/水印' },
+      { id: 'fh-pdf', name: 'PDF 工具箱', icon: '📕', type: 'formathub', view: 'pdf', desc: '拆分/合并/水印/加密' },
       { id: 'fh-github', name: 'GitHub 下载', icon: '🐙', type: 'formathub', view: 'github', desc: 'GitHub/Gitee 文件下载' },
     ]
   },

@@ -139,3 +139,48 @@ export async function watermarkPDF(file, opts) {
   const bytes = await pdfDoc.save();
   return new Blob([bytes], { type: 'application/pdf' });
 }
+
+/**
+ * PDF 密码保护（真加密）
+ * pdf-lib 本身不能加密，这里按需加载 qpdf 的 WebAssembly 版（约 1.3MB，
+ * 只在点加密时从 CDN 拉，不进首屏），用 AES-256 给文件上锁。
+ * 输出文件带 /Encrypt，阅读器打开时会要求输入密码。
+ */
+const QPDF_JS_URL = 'https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.js';
+const QPDF_WASM_URL = 'https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.wasm';
+let qpdfScriptPromise = null;
+
+function loadQpdfScript() {
+  if (typeof window !== 'undefined' && typeof window.Module === 'function') return Promise.resolve();
+  if (qpdfScriptPromise) return qpdfScriptPromise;
+  qpdfScriptPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = QPDF_JS_URL;
+    script.onload = () => resolve();
+    script.onerror = () => { qpdfScriptPromise = null; reject(new Error('qpdf 加密库加载失败，请检查网络后重试')); };
+    document.head.appendChild(script);
+  });
+  return qpdfScriptPromise;
+}
+
+export async function encryptPDF(file, password) {
+  if (!password) throw new Error('请输入密码');
+  await loadQpdfScript();
+  const factory = window.Module;
+  if (typeof factory !== 'function') throw new Error('qpdf 加密库加载失败，请检查网络后重试');
+  const qpdf = await factory({ locateFile: () => QPDF_WASM_URL });
+  const ab = await readAB(file);
+  qpdf.FS.writeFile('/input.pdf', new Uint8Array(ab));
+  const code = qpdf.callMain(['/input.pdf', '--encrypt', password, password, '256', '--', '/output.pdf']);
+  let out = null;
+  try { out = qpdf.FS.readFile('/output.pdf'); } catch { }
+  if (!out || !out.length) {
+    throw new Error(code === 2 ? '加密失败：这个 PDF 可能已损坏或本身已加密' : '加密失败（qpdf 返回 ' + code + '）');
+  }
+  const tailText = new TextDecoder('latin1').decode(out.slice(Math.max(0, out.length - 200000)));
+  const headText = new TextDecoder('latin1').decode(out.slice(0, Math.min(out.length, 200000)));
+  if (!headText.includes('/Encrypt') && !tailText.includes('/Encrypt')) {
+    throw new Error('加密失败：生成的文件没有加密信息，已丢弃');
+  }
+  return new Blob([out], { type: 'application/pdf' });
+}
