@@ -3,7 +3,7 @@
     id: 'text',
     name: '文字工具',
     icon: '📝',
-    color: '#3b82f6',
+    color: '#6B8F71',
     tools: [
       { id: 'rename', name: '文件批量改名', icon: '📁', type: 'rename', desc: '批量重命名' },
       { id: 'proofread', name: '中文排版检查', icon: '📋', type: 'proofread', desc: '排版检查修复' },
@@ -14,7 +14,7 @@
     id: 'image',
     name: '图片工具',
     icon: '🖼️',
-    color: '#10b981',
+    color: '#C98A4B',
     tools: [
       { id: 'qrcode', name: '二维码', icon: '📱', type: 'qrcode', desc: '生成识别' },
       { id: 'colorpick', name: '取色器', icon: '🎨', type: 'color', desc: '提取颜色' },
@@ -25,7 +25,7 @@
     id: 'daily',
     name: '日常工具',
     icon: '🧰',
-    color: '#f59e0b',
+    color: '#C1664A',
     tools: [
       { id: 'timer', name: '倒计时', icon: '⏱️', type: 'timer', desc: '计时器' },
       { id: 'random', name: '随机数', icon: '🎲', type: 'random', desc: '生成随机' },
@@ -37,7 +37,7 @@
     id: 'code',
     name: '代码工具',
     icon: '💻',
-    color: '#8b5cf6',
+    color: '#5A7D8A',
     tools: [
       { id: 'codefmt', name: '代码格式化', icon: '📄', type: 'codefmt', desc: '大文件格式化查看' },
       { id: 'jsurl', name: 'JS 网址转换', icon: '🔗', type: 'jsurl', desc: '预览下载 JS 文件' },
@@ -48,7 +48,7 @@
     id: 'formathub',
     name: 'FormatHub',
     icon: '🔄',
-    color: '#06b6d4',
+    color: '#8A739E',
     tools: [
       { id: 'fh-document', name: '文档与办公文件', icon: '📄', type: 'formathub', view: 'document', desc: 'Word/Excel/TXT/MD 互转' },
       { id: 'fh-image', name: '图像与图片', icon: '🖼️', type: 'formathub', view: 'image', desc: 'JPG/PNG/WebP/GIF/SVG 互转' },
