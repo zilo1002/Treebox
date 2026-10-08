@@ -1,6 +1,5 @@
 <template>
-  <div class="tool-card" :class="{ 'tool-card--delete': deleteMode }" @click="onClick">
-    <span v-if="deleteMode" class="delete-badge">×</span>
+  <div class="tool-card" @click="$router.push(`/tool/${tool.id}`)">
     <div class="t-icon">{{ tool.icon }}</div>
     <div class="t-info">
       <div class="t-name">{{ tool.name }}</div>
@@ -10,25 +9,10 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
-const props = defineProps({ tool: Object, list: Boolean, deleteMode: { type: Boolean, default: false } })
-const emit = defineEmits(['remove'])
-const router = useRouter()
-function onClick() {
-  if (props.deleteMode) { emit('remove', props.tool); return }
-  router.push(`/tool/${props.tool.id}`)
-}
+defineProps({ tool: Object, list: Boolean })
 </script>
 
 <style scoped>
-.tool-card { position: relative; }
-.tool-card--delete { border-color: rgba(193, 102, 74, 0.45); }
-.delete-badge {
-  position: absolute; top: 6px; right: 6px;
-  width: 20px; height: 20px; border-radius: 50%;
-  background: #C1664A; color: #fff;
-  font-size: 14px; line-height: 20px; text-align: center;
-}
 .tool-card {
   background: var(--bg-raised);
   border: 1px solid var(--border);
