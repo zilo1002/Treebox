@@ -184,3 +184,22 @@ export async function encryptPDF(file, password) {
   }
   return new Blob([out], { type: 'application/pdf' });
 }
+
+export async function decryptPDF(file, password) {
+  await loadQpdfScript();
+  const factory = window.Module;
+  if (typeof factory !== 'function') throw new Error('qpdf 解密库加载失败，请检查网络后重试');
+  const qpdf = await factory({ locateFile: () => QPDF_WASM_URL });
+  const ab = await readAB(file);
+  qpdf.FS.writeFile('/input.pdf', new Uint8Array(ab));
+  const args = [];
+  if (password) args.push('--password=' + password);
+  args.push('--decrypt', '/input.pdf', '/output.pdf');
+  const code = qpdf.callMain(args);
+  let out = null;
+  try { out = qpdf.FS.readFile('/output.pdf'); } catch { }
+  if (!out || !out.length) {
+    throw new Error(password ? '删除密码失败：密码不正确，或这个 PDF 已损坏' : '删除密码失败：这个 PDF 需要密码，请先填入正确密码');
+  }
+  return new Blob([out], { type: 'application/pdf' });
+}
