@@ -21,6 +21,7 @@ let mergeMode = false;
 let formatMode = false;
 let app = null;
 let currentView = 'home';
+let lockedView = null; // Treebox 子工具模式：锁定到初始分支，不允许跳回 FormatHub 首页或其它分支
 let githubAbortController = null;
 let githubPlatform = 'github'; // 'github' | 'gitee'
 let releaseAssets = [];
@@ -137,7 +138,7 @@ function manageMemory() {
 }
 
 function render() {
-  const view = currentView || 'home';
+  const view = lockedView || currentView || 'home';
   if (view === 'github') {
     currentCat = null;
     renderGitHubPage();
@@ -1613,6 +1614,8 @@ window.downloadReleaseAssetByIdx = async function(idx) {
 };
 
 function navigate(view) {
+  // 子工具模式下禁止内部跳首页/其它分支，保持独立
+  if (lockedView && view !== lockedView) return;
   currentView = view;
   render();
 }
@@ -1625,6 +1628,15 @@ function handleClick(e) {
   if (app && !app.contains(a)) return;
   e.preventDefault();
   const target = a.getAttribute('href').slice(1);
+  if (lockedView) {
+    // 分支工具的返回箭头 (href="#") 应该退出到 Treebox 上一页，而不是 FormatHub 首页
+    if (target === '' || target === 'home') {
+      window.history.back();
+      return;
+    }
+    // 点到其它分支的链接直接忽略，子工具之间不互相跳转
+    if (target !== lockedView) return;
+  }
   navigate(target === '' ? 'home' : target);
 }
 
@@ -1648,6 +1660,8 @@ document.addEventListener('paste', e => {
 export function initFormatHub(container, initialView) {
   app = container;
   currentView = initialView || 'home';
+  // Treebox 里每个 fh-* 都是独立子工具，只有显式传 home 时才允许首页导航
+  lockedView = (initialView && initialView !== 'home') ? initialView : null;
   files = [];
   currentCat = null;
   mergeMode = false;
@@ -1658,5 +1672,6 @@ export function initFormatHub(container, initialView) {
     app.removeEventListener('click', handleClick);
     workerPool.terminateAll();
     app = null;
+    lockedView = null;
   };
 }
