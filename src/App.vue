@@ -205,30 +205,28 @@ function onTouchEnd() {
   backdrop-filter: blur(2px);
 }
 
-/* 设置浮动按钮 */
+/* 设置浮动按钮：和顶部搜索按钮用同一套 icon-btn 样式 */
 .settings-float-btn {
   position: fixed;
-  top: 12px;
-  right: 12px;
+  top: 10px;
+  right: 14px;
   z-index: 50;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   border: none;
-  background: var(--bg-raised);
+  background: transparent;
   color: var(--text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 12px var(--shadow);
-  transition: transform 0.2s, background 0.2s;
+  transition: background 0.15s;
 }
 .settings-float-btn:hover {
-  transform: scale(1.08);
-  background: var(--bg-strong);
+  background: var(--bg-muted);
 }
 .settings-float-btn:active {
-  transform: scale(0.95);
+  background: var(--bg-muted);
 }
 </style>
