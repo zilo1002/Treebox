@@ -12,8 +12,8 @@ export default defineConfig({
         name: 'Treebox',
         short_name: 'Treebox',
         description: '一个像书架一样的个人工具箱',
-        theme_color: '#3b82f6',
-        background_color: '#ffffff',
+        theme_color: '#356B57',
+        background_color: '#EEF3EC',
         display: 'standalone',
         start_url: './',
         icons: [
@@ -22,7 +22,10 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true
       }
     })
   ]
