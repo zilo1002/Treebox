@@ -53,7 +53,7 @@ export const useAppStore = defineStore('app', () => {
   const categories = ref(mergeCategories(saved?.categories, defaultCategories))
   const favorites = ref(saved?.favorites || [])
   const theme = ref(saved?.theme || 'auto')
-  const accent = ref(saved?.accent || '#3b82f6')
+  const accent = ref(saved?.accent || '#356B57')
   const grid = ref(saved?.grid || '3x3')
   const radius = ref(saved?.radius ?? 12)
 
