@@ -154,75 +154,8 @@ function render() {
 }
 
 function renderHome() {
-  const cats = Object.values(CATEGORIES);
-  const isEn = getLang() === 'en';
-  let cards = '';
-  for (const cat of cats) {
-    const title = isEn ? cat.titleEn : cat.title;
-    const desc = isEn ? cat.descEn : cat.desc;
-    const extsHtml = cat.exts.slice(0,6).map(e => '<span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-500 uppercase">'+e+'</span>').join('');
-    const moreHtml = cat.exts.length > 6 ? '<span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-500">+'+(cat.exts.length-6)+'</span>' : '';
-    cards += '<a href="#'+cat.id+'" class="group relative rounded-2xl bg-slate-800/30 border border-slate-700/40 hover:border-'+cat.color+'-500/40 p-6 transition-all duration-300 hover:bg-slate-800/50 active:scale-[0.98]">'+
-      '<div class="absolute inset-0 rounded-2xl bg-gradient-to-br '+cat.bgGradient+' opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>'+
-      '<div class="relative">'+
-        '<div class="flex items-start justify-between mb-4">'+
-          '<div class="w-14 h-14 rounded-2xl bg-'+cat.color+'-500/10 border border-'+cat.color+'-500/20 flex items-center justify-center text-3xl">'+cat.emoji+'</div>'+
-          '<span class="text-xs font-medium '+cat.textColor+' bg-'+cat.color+'-500/10 px-2.5 py-1 rounded-full">'+cat.exts.length+t('formatsCount')+'</span>'+
-        '</div>'+
-        '<h3 class="text-lg font-bold mb-1.5 group-hover:'+cat.textColor+' transition-colors">'+title+'</h3>'+
-        '<p class="text-sm text-slate-400 mb-4">'+desc+'</p>'+
-        '<div class="flex flex-wrap gap-1.5">'+extsHtml+moreHtml+'</div>'+
-        '<div class="mt-4 flex items-center gap-1 text-xs '+cat.textColor+' font-medium">'+
-          '<span>'+t('enterConvert')+'</span>'+
-          '<svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>'+
-        '</div>'+
-      '</div>'+
-    '</a>';
-  }
-
-  // GitHub 下载卡片
-  cards += '<a href="#github" class="group relative overflow-hidden rounded-2xl bg-slate-800/40 border border-slate-700/30 p-4 sm:p-6 hover:border-purple-500/40 transition-all duration-300 hover:-translate-y-1">'+
-    '<div class="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>'+
-    '<div class="relative flex items-start justify-between mb-4">'+
-      '<div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-2xl">🐙</div>'+
-      '<span class="text-[10px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-full">'+t('newBadge')+'</span>'+
-    '</div>'+
-    '<h3 class="relative text-lg font-bold text-slate-100 mb-1">GitHub '+t('download')+'</h3>'+
-    '<p class="relative text-sm text-slate-400">'+t('githubDesc')+'</p>'+
-  '</a>';
-
-  app.innerHTML = '<div class="min-h-screen bg-slate-950">'+
-    '<header class="border-b border-slate-800 glass sticky top-0 z-50">'+
-      '<div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">'+
-        '<div class="flex items-center gap-3">'+
-          '<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">'+
-            '<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>'+
-          '</div>'+
-          '<div><h1 class="text-xl font-bold tracking-tight">'+t('appName')+'</h1><p class="text-xs text-slate-400">'+t('appSubtitle')+'</p></div>'+
-        '</div>'+
-        '<div class="flex items-center gap-3">'+
-          '<div class="flex items-center gap-1">'+
-            '<button onclick="window.switchLang(\'zh\')" class="lang-btn '+(getLang()==='zh'?'active':'')+'">中文</button>'+
-            '<button onclick="window.switchLang(\'en\')" class="lang-btn '+(getLang()==='en'?'active':'')+'">EN</button>'+
-          '</div>'+
-          '<div class="hidden sm:flex items-center gap-2 text-xs text-slate-400 bg-slate-800/60 px-3 py-1.5 rounded-full border border-slate-700/50">'+
-            '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>'+t('localProcess')+' · '+t('localProcessDesc')+
-          '</div>'+
-        '</div>'+
-      '</div>'+
-    '</header>'+
-    '<main class="max-w-6xl mx-auto px-4 sm:px-6 py-8 w-full">'+
-      '<div class="text-center mb-10"><h2 class="text-2xl sm:text-3xl font-bold mb-2">'+t('selectType')+'</h2><p class="text-slate-400 text-sm">'+t('selectTypeDesc')+'</p></div>'+
-      '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">'+cards+'</div>'+
-      '<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-10">'+
-        '<div class="text-center p-4 rounded-xl bg-slate-800/15 border border-slate-700/20"><div class="text-2xl mb-1">🔒</div><p class="text-xs font-medium">'+t('localProcess')+'</p><p class="text-[10px] text-slate-500 mt-0.5">'+t('localProcessDesc')+'</p></div>'+
-        '<div class="text-center p-4 rounded-xl bg-slate-800/15 border border-slate-700/20"><div class="text-2xl mb-1">⚡</div><p class="text-xs font-medium">'+t('fastConvert')+'</p><p class="text-[10px] text-slate-500 mt-0.5">'+t('fastConvertDesc')+'</p></div>'+
-        '<div class="text-center p-4 rounded-xl bg-slate-800/15 border border-slate-700/20"><div class="text-2xl mb-1">📱</div><p class="text-xs font-medium">'+t('allPlatform')+'</p><p class="text-[10px] text-slate-500 mt-0.5">'+t('allPlatformDesc')+'</p></div>'+
-        '<div class="text-center p-4 rounded-xl bg-slate-800/15 border border-slate-700/20"><div class="text-2xl mb-1">🆓</div><p class="text-xs font-medium">'+t('free')+'</p><p class="text-[10px] text-slate-500 mt-0.5">'+t('freeDesc')+'</p></div>'+
-      '</div>'+
-    '</main>'+
-    '<footer class="border-t border-slate-800 mt-12 py-8 text-center text-slate-500 text-xs"><p>'+t('footer')+'</p><p class="mt-1 text-[10px]">'+t('footerDesc')+'</p></footer>'+
-  '</div>';
+  // 「选择转换类型」聚合页已删除：每个分支在 Treebox 里是独立子工具，不再提供首页选单
+  app.innerHTML = '<div class="view-enter" style="padding:32px 16px;text-align:center;color:var(--text-secondary);font-size:13px;line-height:1.6">请从 Treebox 里选择一个具体工具</div>';
 }
 
 async function renderCategoryPage(catId) {
@@ -306,9 +239,7 @@ async function renderCategoryPage(catId) {
   app.innerHTML = '<div class="min-h-screen bg-slate-950 view-enter">'+
     '<header class="border-b border-slate-800 glass sticky top-0 z-50">'+
       '<div class="max-w-6xl mx-auto px-4 py-3.5 flex items-center gap-3">'+
-        '<a href="#" class="p-2 -ml-2 rounded-lg hover:bg-slate-800 text-slate-400 transition-colors">'+
-          '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>'+
-        '</a>'+
+
         '<div class="flex items-center gap-2.5">'+
           '<span class="text-2xl">'+cat.emoji+'</span>'+
           '<div><h1 class="text-base font-bold leading-none">'+title+'</h1><p class="text-[10px] text-slate-400 mt-0.5">'+desc+'</p></div>'+
@@ -1331,9 +1262,7 @@ function renderGitHubPage() {
   app.innerHTML = '<div class="min-h-screen bg-slate-950 view-enter">'+
     '<header class="border-b border-slate-800 glass sticky top-0 z-50">'+
       '<div class="max-w-6xl mx-auto px-4 py-3.5 flex items-center gap-3">'+
-        '<a href="#" class="p-2 -ml-2 rounded-lg hover:bg-slate-800 text-slate-400 transition-colors">'+
-          '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>'+
-        '</a>'+
+
         '<div class="flex items-center gap-2.5">'+
           '<span class="text-2xl">🐙</span>'+
           '<div><h1 class="text-base font-bold leading-none">GitHub '+t('download')+'</h1><p class="text-[10px] text-slate-400 mt-0.5">'+t('githubSubtitle')+'</p></div>'+
@@ -1629,7 +1558,7 @@ function handleClick(e) {
   e.preventDefault();
   const target = a.getAttribute('href').slice(1);
   if (lockedView) {
-    // 分支工具的返回箭头 (href="#") 应该退出到 Treebox 上一页，而不是 FormatHub 首页
+    // 历史遗留的 href="#" 链接不再回 FormatHub 首页（该页已删除，返回按钮已去掉）
     if (target === '' || target === 'home') {
       window.history.back();
       return;
