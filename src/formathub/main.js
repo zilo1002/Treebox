@@ -68,6 +68,8 @@ const CDN_LIBS = {
   html2canvas: 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
   jspdf:       'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
   pdflib:      'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js',
+  fontkit:     'https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js',
+  pdfjs:       'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js',
 };
 
 const loadedLibs = new Set();
@@ -92,7 +94,7 @@ function loadScript(url) {
 const CAT_LIBS = {
   document: ['mammoth', 'html2canvas', 'jspdf'],
   data:     ['papaparse', 'jsyaml', 'xlsx'],
-  ebook:    [], // ebook Worker 内用 importScripts，主线程不需要额外库
+  ebook:    ['jspdf', 'pdflib', 'pdfjs'], // epub<->pdf 在主线程做，需要 jsPDF/PDFLib/pdf.js
   image:    [], // 纯 Canvas，不需要额外库
   archive:  [], // JSZip 已在 index.html 全局加载
   pdf:      ['pdflib'], // 预留阶段二
@@ -169,23 +171,20 @@ async function renderCategoryPage(catId) {
     document: [
       { from: 'DOCX', to: 'TXT, Markdown, HTML, PDF', icon: '📝' },
       { from: 'XLSX / XLS / CSV / ODS', to: 'CSV, JSON, HTML, XLSX', icon: '📊' },
-      { from: 'TXT / Markdown', to: 'PDF, HTML', icon: '📄' },
-      { from: 'PDF / PPT / PPTX / ODP / KEY / DOC / RTF / ODT / PAGES / XLSM', to: t('notSupported'), icon: '⚠️', warn: true }
+      { from: 'TXT / Markdown', to: 'PDF, HTML, DOCX', icon: '📄' }
     ],
     image: [
-      { from: 'JPG / JPEG / PNG / GIF / BMP / WebP / TIFF / TIF', to: '互转全部格式', icon: '🖼️' },
-      { from: 'SVG 矢量图', to: 'PNG, JPG, WebP, BMP', icon: '✏️' },
-      { from: 'HEIC / AVIF', to: t('notSupported'), icon: '⚠️', warn: true }
+      { from: 'JPG / JPEG / PNG / GIF / WebP', to: '互转全部格式', icon: '🖼️' },
+      { from: 'SVG 矢量图', to: 'PNG, JPG, WebP', icon: '✏️' }
     ],
     ebook: [
-      { from: 'EPUB', to: 'TXT, HTML', icon: '📖' },
+      { from: 'EPUB', to: 'TXT, HTML, PDF', icon: '📖' },
       { from: 'MOBI / AZW3', to: 'TXT', icon: '📱' },
-      { from: 'PDF', to: t('notSupported'), icon: '⚠️', warn: true }
+      { from: 'PDF', to: 'EPUB, TXT, HTML', icon: '📕' }
     ],
     data: [
-      { from: 'JSON / XML / CSV / YAML / YML / TOML', to: '互转全部格式', icon: '{ }' },
-      { from: 'ZIP', to: '提取内容 / 重新打包', icon: '📦' },
-      { from: 'RAR / 7Z', to: t('notSupported'), icon: '⚠️', warn: true }
+      { from: 'JSON / XML / CSV / YAML / YML', to: '互转全部格式', icon: '{ }' },
+      { from: 'ZIP', to: '提取内容 / 重新打包', icon: '📦' }
     ]
   };
   const items = matrixData[catId] || [];
@@ -841,7 +840,11 @@ async function startConvert(catId) {
         }
       }
       else if (catId === 'ebook') {
-        if (ext === 'epub') {
+        if (ext === 'pdf' || target === 'pdf' || target === 'epub') {
+          // EPUB <-> PDF 互转在主线程做（需要 PDFLib/pdf.js 和中文字体）
+          await ensureLibsReady('ebook');
+          blob = await convEbook(item.file, target);
+        } else if (ext === 'epub') {
           const ab = await readAB(item.file);
           blob = await workerConvert('ebook', 'convertEpub', { arrayBuffer: ab, target, fileName: item.file.name }, item.id);
         } else if (['mobi', 'azw3'].includes(ext)) {
