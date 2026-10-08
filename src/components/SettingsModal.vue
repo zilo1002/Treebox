@@ -123,9 +123,21 @@
             <input type="range" min="0" max="24" v-model.number="store.radius">
           </div>
 
-          <!-- 书架布局 -->
+          <!-- 导航分类布局 -->
           <div class="setting-group">
-            <label>{{ $t('settings.layout') }}</label>
+            <label>{{ $t('settings.navLayout') }}</label>
+            <div class="segmented">
+              <button
+                v-for="g in navGridOptions" :key="g.key"
+                class="seg-btn" :class="{ active: store.navGrid === g.key }"
+                @click="store.navGrid = g.key"
+              >{{ g.label }}</button>
+            </div>
+          </div>
+
+          <!-- 次分类布局 -->
+          <div class="setting-group">
+            <label>{{ $t('settings.subLayout') }}</label>
             <div class="segmented">
               <button
                 v-for="g in gridOptions" :key="g.key"
@@ -133,6 +145,7 @@
                 @click="store.grid = g.key"
               >{{ g.label }}</button>
             </div>
+            <p class="layout-hint">{{ $t('settings.allFollowsSub') }}</p>
           </div>
 
           <!-- 开关组 -->
@@ -191,9 +204,15 @@ const themeOptions = computed(() => [
 ])
 
 const gridOptions = computed(() => [
+  { key: 'list', label: locale.value === 'en' ? 'List' : '列表' },
   { key: '3x3', label: '3×3' },
   { key: '4x4', label: '4×4' },
+])
+
+const navGridOptions = computed(() => [
+  { key: '2xn', label: locale.value === 'en' ? 'Default 2×n' : '默认 2×n' },
   { key: 'list', label: locale.value === 'en' ? 'List' : '列表' },
+  { key: '3x3', label: '3×3' },
 ])
 
 function setLocale(key) {
@@ -289,6 +308,7 @@ onUnmounted(() => {
   color: var(--text-secondary);
 }
 .setting-group label span { color: var(--accent); font-weight: 600; margin-left: 4px; }
+.layout-hint { font-size: 0.6875rem; color: var(--text-tertiary); margin-top: 6px; }
 
 .segmented {
   display: flex;

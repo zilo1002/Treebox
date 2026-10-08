@@ -55,6 +55,7 @@ export const useAppStore = defineStore('app', () => {
   const theme = ref(saved?.theme || 'auto')
   const accent = ref(saved?.accent || '#356B57')
   const grid = ref(saved?.grid || '3x3')
+  const navGrid = ref(saved?.navGrid || '2xn')
   const radius = ref(saved?.radius ?? 12)
 
   // === 信封状态：用 sessionStorage 判断是否是新会话 ===
@@ -135,6 +136,7 @@ export const useAppStore = defineStore('app', () => {
       theme: theme.value,
       accent: accent.value,
       grid: grid.value,
+      navGrid: navGrid.value,
       radius: radius.value,
       // opened 不再持久化，由 sessionStorage 控制
       bgColor: bgColor.value,
@@ -149,12 +151,12 @@ export const useAppStore = defineStore('app', () => {
   }
 
   watch([
-    categories, favorites, theme, accent, grid, radius,
+    categories, favorites, theme, accent, grid, navGrid, radius,
     bgColor, textColor, navColor, locale, bgAnimation, fontSize, enableGlass, reduceMotion
   ], persist, { deep: true })
 
   return {
-    categories, favorites, theme, accent, grid, radius, opened,
+    categories, favorites, theme, accent, grid, navGrid, radius, opened,
     bgColor, textColor, navColor, locale, bgAnimation, fontSize, enableGlass, reduceMotion,
     isDark, allTools, favTools,
     toggleFav, isFav, addCategory, addTool,
