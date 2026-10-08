@@ -87,6 +87,24 @@
   border-color: var(--border);
 }
 
+/* Sticky title bar for each FormatHub branch tool (mobile)
+   Treebox scrolls inside .app-content (padding:16px), so offset -16px
+   makes the bar sit flush under the main AppHeader instead of scrolling away.
+   Not relying on Tailwind's sticky class generation for dynamically inserted HTML.
+*/
+.formathub-root header {
+  position: sticky;
+  top: -16px;
+  z-index: 40;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+@media (max-width: 640px) {
+  .formathub-root header {
+    top: -16px;
+  }
+}
+
 /* Drop zone */
 .formathub-root .drop-active {
   border-color: var(--accent) !important;
