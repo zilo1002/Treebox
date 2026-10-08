@@ -29,6 +29,7 @@ let pdfToolFiles = [];
 let pdfOpts = { range: '', watermarkText: '', fontSize: 36, opacity: 0.3, position: 'center', rotation: -30, password: '' };
 let pdfResult = null; // { blob, name, info }
 let pdfPageCounts = new Map(); // File -> 页数(number) | 'loading' | 'unknown'
+let archiveFiles = []; // 下方压缩/解压缩小窗里的任意格式文件
 let githubPlatform = 'github'; // 'github' | 'gitee'
 let releaseAssets = [];
 
@@ -424,8 +425,7 @@ async function renderCategoryPage(catId) {
       { from: 'PDF', to: 'EPUB, TXT, HTML', icon: '📕' }
     ],
     data: [
-      { from: 'JSON / XML / CSV / YAML / YML', to: '互转全部格式', icon: '{ }' },
-      { from: 'ZIP', to: '提取内容 / 重新打包', icon: '📦' }
+      { from: 'JSON / XML / CSV / YAML / YML', to: '互转全部格式', icon: '{ }' }
     ]
   };
   const items = matrixData[catId] || [];
@@ -465,6 +465,34 @@ async function renderCategoryPage(catId) {
       '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>'+
       t('mergeFiles')+
     '</button>';
+  }
+
+  // 数据页下方：压缩 / 解压缩小窗（任意格式文件，不只限数据格式）
+  let archiveHtml = '';
+  if (catId === 'data') {
+    archiveHtml = '<div class="rounded-2xl bg-slate-800/20 border border-emerald-500/20 p-4 sm:p-5 space-y-3">' +
+      '<div>' +
+        '<h3 class="text-sm font-semibold text-slate-200">' + (isEn ? 'Compress / Extract' : '压缩 / 解压缩') + '</h3>' +
+        '<p class="text-[11px] text-slate-400 mt-0.5">' + (isEn ? 'Any file type can be packed here, not just data files. Add files, then pack them into a ZIP, or add a ZIP to extract it.' : '这里什么格式都能打包，不只限数据文件。先把文件加进来，再打包成 ZIP；加进来的是 ZIP 也可以直接解压。') + '</p>' +
+      '</div>' +
+      '<div id="archiveDropZone" class="group relative border-2 border-dashed border-slate-600 rounded-2xl bg-slate-800/20 p-6 text-center cursor-pointer">' +
+        '<input type="file" id="archiveFileInput" multiple accept="*/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">' +
+        '<div class="relative z-0 pointer-events-none">' +
+          '<h3 class="text-sm font-semibold mb-1">' + t('clickOrDrag') + '</h3>' +
+          '<p class="text-slate-400 text-[11px]">' + (isEn ? 'Any format · ' : '任意格式 · ') + t('maxSize') + '</p>' +
+        '</div>' +
+      '</div>' +
+      '<div id="archiveFileList" class="space-y-2"></div>' +
+      '<div class="flex items-center gap-2">' +
+        '<span class="text-[10px] text-slate-500 shrink-0">' + (isEn ? 'ZIP password' : 'ZIP 密码') + ':</span>' +
+        '<input type="password" id="archivePassword" autocomplete="off" placeholder="' + (isEn ? 'Only for extracting a password ZIP' : '只在解压带密码的 ZIP 时填') + '" class="flex-1 bg-slate-900/50 border border-slate-700 rounded-md px-2 py-1.5 text-[11px] text-slate-300 focus:outline-none">' +
+      '</div>' +
+      '<div class="grid grid-cols-2 gap-2">' +
+        '<button onclick="window.packArchiveFiles()" class="py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm font-medium">' + (isEn ? 'Pack as ZIP' : '打包成 ZIP') + '</button>' +
+        '<button onclick="window.extractArchiveFile()" class="py-2.5 rounded-xl bg-slate-800 border border-slate-600 text-slate-300 text-sm font-medium">' + (isEn ? 'Extract ZIP' : '解压 ZIP') + '</button>' +
+      '</div>' +
+      '<button onclick="window.clearArchiveFiles()" class="w-full py-2 rounded-xl bg-slate-800/50 border border-slate-700 text-slate-400 text-xs font-medium">' + (isEn ? 'Clear list' : '清空列表') + '</button>' +
+    '</div>';
   }
 
   // JSON 格式化按钮
@@ -583,6 +611,7 @@ async function renderCategoryPage(catId) {
         '</button>'+
       '</div>'+
       '</div>'+
+      archiveHtml +
     '</main>'+
   '</div>'+
   '<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">'+
@@ -615,6 +644,18 @@ function bindCategoryEvents(catId) {
   dz.addEventListener('dragleave', () => dz.classList.remove('drop-active'));
   dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drop-active'); handleFiles(e.dataTransfer.files, catId); });
   if (btn) btn.addEventListener('click', () => startConvert(catId));
+
+  if (catId === 'data') {
+    const az = document.getElementById('archiveDropZone');
+    const ai = document.getElementById('archiveFileInput');
+    if (ai) ai.addEventListener('change', e => { addArchiveFiles(e.target.files); e.target.value = ''; });
+    if (az) {
+      az.addEventListener('dragover', e => { e.preventDefault(); az.classList.add('drop-active'); });
+      az.addEventListener('dragleave', () => az.classList.remove('drop-active'));
+      az.addEventListener('drop', e => { e.preventDefault(); az.classList.remove('drop-active'); addArchiveFiles(e.dataTransfer.files); });
+    }
+    renderArchiveList();
+  }
 
   const cm = document.getElementById('closeModal');
   if (cm) cm.addEventListener('click', () => {
@@ -1262,6 +1303,86 @@ window.startFormatJSON = async function(mode) {
       }
     } catch (err) {
       toast('❌', item.file.name + ': ' + err.message);
+    }
+  }
+};
+
+function addArchiveFiles(fileList) {
+  Array.from(fileList || []).forEach(f => {
+    if (f.size > MAX_SIZE) { toast('⚠️', '「' + f.name + '」' + t('maxSize')); return; }
+    archiveFiles.push(f);
+  });
+  renderArchiveList();
+}
+
+function renderArchiveList() {
+  const el = document.getElementById('archiveFileList');
+  if (!el) return;
+  if (!archiveFiles.length) { el.innerHTML = ''; return; }
+  const isEn = getLang() === 'en';
+  const total = archiveFiles.reduce((a, f) => a + f.size, 0);
+  el.innerHTML = archiveFiles.map((f, idx) =>
+    '<div class="flex items-center gap-2 p-3 rounded-xl bg-slate-800/30 border border-slate-700/30">' +
+      '<span class="text-xs text-slate-400 w-6">' + (idx + 1) + '.</span>' +
+      '<span class="flex-1 text-xs text-slate-200 truncate">' + f.name + '</span>' +
+      (/\.zip$/i.test(f.name) ? '<span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">ZIP</span>' : '') +
+      '<span class="text-[10px] text-slate-500">' + fmtSize(f.size) + '</span>' +
+      '<button onclick="window.removeArchiveFile(' + idx + ')" class="text-xs px-2 py-1 rounded bg-slate-700 text-slate-300">' + t('remove') + '</button>' +
+    '</div>'
+  ).join('') + '<p class="text-[11px] text-slate-400 px-1">' + (isEn ? archiveFiles.length + ' files · ' + fmtSize(total) + ' total' : '共 ' + archiveFiles.length + ' 个文件 · 合计 ' + fmtSize(total)) + '</p>';
+}
+
+window.removeArchiveFile = function(idx) { archiveFiles.splice(idx, 1); renderArchiveList(); };
+window.clearArchiveFiles = function() { archiveFiles = []; renderArchiveList(); };
+
+window.packArchiveFiles = async function() {
+  const isEn = getLang() === 'en';
+  if (!archiveFiles.length) { toast('⚠️', isEn ? 'Add some files first' : '先添加几个文件再打包'); return; }
+  if (typeof JSZip === 'undefined') { toast('❌', isEn ? 'ZIP library not loaded yet' : '压缩库还没加载好，稍等一下再试'); return; }
+  try {
+    const zip = new JSZip();
+    const used = new Set();
+    for (const f of archiveFiles) {
+      let name = f.name.split('/').pop() || 'file';
+      if (used.has(name)) {
+        const dot = name.lastIndexOf('.');
+        const base = dot > 0 ? name.slice(0, dot) : name;
+        const ext = dot > 0 ? name.slice(dot) : '';
+        let n = 1;
+        while (used.has(base + ' (' + n + ')' + ext)) n++;
+        name = base + ' (' + n + ')' + ext;
+      }
+      used.add(name);
+      zip.file(name, f);
+    }
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+    dlBlob(blob, 'treebox-archive.zip');
+    toast('✅', (isEn ? 'Packed ' : '已打包 ') + archiveFiles.length + (isEn ? ' files' : ' 个文件'));
+  } catch (err) {
+    toast('❌', (err && err.message) || (isEn ? 'Pack failed' : '打包失败'));
+  }
+};
+
+window.extractArchiveFile = async function() {
+  const isEn = getLang() === 'en';
+  const zipFile = archiveFiles.find(f => /\.zip$/i.test(f.name));
+  if (!zipFile) { toast('⚠️', isEn ? 'Add a ZIP file first' : '列表里还没有 ZIP，先添加一个 ZIP 文件'); return; }
+  const pwEl = document.getElementById('archivePassword');
+  const password = pwEl ? pwEl.value : '';
+  try {
+    const r = await convArchive(zipFile, 'extract', password);
+    if (r && r.type === 'extracted') {
+      if (pwEl) pwEl.value = '';
+      showExtractModal(r.entries);
+    }
+  } catch (err) {
+    if (err && err.message === '__ZIP_NEEDS_PASSWORD__') {
+      toast('❌', isEn ? 'This ZIP needs a password: fill it in below, then extract again' : '这个 ZIP 带密码，把密码填到下面框里再点一次解压');
+    } else if (err && err.message === '__ZIP_WRONG_PASSWORD__') {
+      if (pwEl) pwEl.value = '';
+      toast('❌', isEn ? 'Wrong ZIP password, nothing extracted' : 'ZIP 密码不正确，没有解出任何文件');
+    } else {
+      toast('❌', (err && err.message) || (isEn ? 'Extract failed' : '解压失败'));
     }
   }
 };
