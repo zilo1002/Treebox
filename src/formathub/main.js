@@ -8,7 +8,7 @@ import { convData } from './converters/data.js';
 import { convDoc, mergeDocs } from './converters/document.js';
 import { convArchive } from './converters/archive.js';
 import { convEbook } from './converters/ebook.js';
-import { splitPDF, mergePDF, watermarkPDF, encryptPDF } from './converters/pdf.js';
+import { splitPDF, mergePDF, watermarkPDF, encryptPDF, decryptPDF } from './converters/pdf.js';
 import { formatJSON } from './converters/format.js';
 import { parseGitHubUrl, isGitHubUrl, checkRateLimit, downloadGitHubFile, downloadGitHubFolder, downloadGitHubFolderFlat, parseReleaseUrl, isReleaseUrl, fetchReleases, downloadReleaseAsset, getDefaultBranch } from './converters/github.js';
 import { parseGiteeUrl, isGiteeUrl, downloadGiteeFile, downloadGiteeFolder, downloadGiteeFolderFlat, getGiteeDefaultBranch } from './converters/gitee.js';
@@ -180,9 +180,10 @@ function renderPdfToolboxPage(cat) {
     { id: 'merge', label: t('pdfMerge'), icon: '🧩' },
     { id: 'watermark', label: t('pdfWatermark'), icon: '💧' },
     { id: 'encrypt', label: t('pdfEncrypt'), icon: '🔒' },
+    { id: 'decrypt', label: t('pdfRemovePassword'), icon: '🔓' },
   ];
   const toolBtns = tools.map(tool =>
-    '<button onclick="window.setPdfTool(\'' + tool.id + '\')" class="flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all ' +
+    '<button onclick="window.setPdfTool(\'' + tool.id + '\')" class="flex-1 min-w-[92px] py-2.5 rounded-xl border text-sm font-medium transition-all ' +
     (pdfTool === tool.id ? 'bg-red-500/10 border-red-500/40 text-red-400' : 'bg-slate-800/30 border-slate-700/40 text-slate-300') + '">' +
     tool.icon + ' ' + tool.label + '</button>'
   ).join('');
@@ -213,8 +214,13 @@ function renderPdfToolboxPage(cat) {
       '<label class="text-xs text-slate-400 block">' + t('password') + '</label>' +
       '<input type="password" autocomplete="new-password" oninput="window.updatePdfOpt(\'password\', this.value)" placeholder="' + t('enterPassword') + '" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">' +
       '<p class="text-[10px] text-slate-500">AES-256 · 打开文件时需要这个密码，丢了无法找回 · 加密库约 1.3MB，只在加密时加载</p></div>';
+  } else if (pdfTool === 'decrypt') {
+    optionsHtml = '<div class="space-y-2">' +
+      '<label class="text-xs text-slate-400 block">' + t('password') + '</label>' +
+      '<input type="password" autocomplete="current-password" oninput="window.updatePdfOpt(\'password\', this.value)" placeholder="' + t('enterPassword') + '" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">' +
+      '<p class="text-[10px] text-slate-500">' + (getLang() === 'en' ? 'Enter the current password to unlock this PDF and save an unprotected copy. Wrong password will fail.' : '填入这个 PDF 现在的密码，就会生成一份没有密码的副本。密码错了会直接失败，不会生成假文件。') + '</p></div>';
   }
-  const actionLabel = pdfTool === 'split' ? t('split') : (pdfTool === 'merge' ? t('merge') : (pdfTool === 'encrypt' ? t('applyEncrypt') : t('applyWatermark')));
+  const actionLabel = pdfTool === 'split' ? t('split') : (pdfTool === 'merge' ? t('merge') : (pdfTool === 'encrypt' ? t('applyEncrypt') : (pdfTool === 'decrypt' ? t('applyRemovePassword') : t('applyWatermark'))));
 
   app.innerHTML = '<div class="min-h-screen bg-slate-950 view-enter">' +
     '<header class="border-b border-slate-800 glass sticky top-0 z-50">' +
@@ -230,7 +236,7 @@ function renderPdfToolboxPage(cat) {
     '<main class="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6 w-full">' +
       '<div class="rounded-2xl bg-slate-800/20 border border-slate-700/30 p-4 space-y-3">' +
         '<h3 class="text-sm font-semibold text-slate-300">' + t('pdfToolSelect') + '</h3>' +
-        '<div class="flex gap-2">' + toolBtns + '</div>' +
+        '<div class="flex flex-wrap gap-2">' + toolBtns + '</div>' +
       '</div>' +
       '<div id="pdfDropZone" class="group relative border-2 border-dashed border-slate-600 rounded-2xl bg-slate-800/20 p-8 text-center cursor-pointer">' +
         '<input type="file" id="pdfFileInput" multiple accept=".pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">' +
@@ -379,6 +385,12 @@ window.runPdfTool = async function() {
       const blob = await encryptPDF(file, pdfOpts.password);
       pdfOpts.password = '';
       pdfResult = { blob, name: file.name.replace(/\.[^.]+$/, '') + '_encrypted.pdf', info: 'AES-256' };
+    } else if (pdfTool === 'decrypt') {
+      if (!pdfToolFiles.length) throw new Error(t('noFiles'));
+      const file = pdfToolFiles[0];
+      const blob = await decryptPDF(file, pdfOpts.password || '');
+      pdfOpts.password = '';
+      pdfResult = { blob, name: file.name.replace(/\.[^.]+$/, '') + '_decrypted.pdf', info: getLang() === 'en' ? 'No password' : '已删除密码' };
     }
     renderPdfResultArea();
     toast('✅', t('done'));
