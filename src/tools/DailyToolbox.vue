@@ -758,7 +758,7 @@ function syncColor(source) {
 .dt-tab {
   flex-shrink: 0;
   padding: 8px 14px;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 500;
   color: #bbb;
   background: none;
@@ -781,7 +781,7 @@ function syncColor(source) {
   border: none;
   background: #f5f5f5;
   color: #333;
-  font-size: 20px;
+  font-size: 1.25rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -790,7 +790,7 @@ function syncColor(source) {
 }
 .dt-tab-settings {
   margin-left: 4px;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 /* ========== 面板区域 ========== */
@@ -816,7 +816,7 @@ function syncColor(source) {
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
 .dt-card h3 {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: #333;
   margin-bottom: 12px;
   font-weight: 600;
@@ -848,7 +848,7 @@ function syncColor(source) {
   border-radius: 12px;
   border: 1px solid #e5e5e5;
   background: #fff;
-  font-size: 18px;
+  font-size: 1.125rem;
   cursor: pointer;
   flex-shrink: 0;
   align-items: center;
@@ -861,7 +861,7 @@ function syncColor(source) {
 }
 .calc-expression {
   flex: 1;
-  font-size: 36px;
+  font-size: 2.25rem;
   font-weight: 400;
   color: #333;
   text-align: right;
@@ -874,7 +874,7 @@ function syncColor(source) {
   color: #333;
 }
 .calc-preview {
-  font-size: 24px;
+  font-size: 1.5rem;
   color: #bbb;
   margin-top: 8px;
   text-align: right;
@@ -919,7 +919,7 @@ function syncColor(source) {
   border: none;
   background: #f0f0f0;
   color: #333;
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 400;
   border-radius: 50%;
   aspect-ratio: 1 / 1;
@@ -936,7 +936,7 @@ function syncColor(source) {
   transform: scale(0.96);
 }
 .calc-key.mem {
-  font-size: 16px;
+  font-size: 1rem;
   color: #999;
   background: transparent;
 }
@@ -944,25 +944,25 @@ function syncColor(source) {
 .calc-key.red {
   color: #e74c3c;
   background: transparent;
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 .calc-key.red:active { background: #ffeaea; }
 .calc-key.op {
   color: #e74c3c;
   background: #fff0f0;
-  font-size: 26px;
+  font-size: 1.625rem;
 }
 .calc-key.op:active { background: #ffdada; }
 .calc-key.eq {
   background: #e74c3c;
   color: #fff;
   border-radius: 16px;
-  font-size: 28px;
+  font-size: 1.75rem;
   font-weight: 500;
 }
 .calc-key.eq:active { background: #c0392b; }
 .calc-key.sci {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: #666;
   background: #f7f7f7;
   border-radius: 12px;
@@ -993,18 +993,18 @@ function syncColor(source) {
   gap: 8px;
 }
 .rate-currency-name {
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 500;
   color: #333;
   letter-spacing: 0.5px;
 }
 .rate-currency-code {
-  font-size: 18px;
+  font-size: 1.125rem;
   color: #bbb;
   font-weight: 300;
 }
 .rate-currency-arrow {
-  font-size: 22px;
+  font-size: 1.375rem;
   color: #ccc;
 }
 .rate-input-wrap,
@@ -1016,7 +1016,7 @@ function syncColor(source) {
   width: 100%;
   border: none;
   outline: none;
-  font-size: 42px;
+  font-size: 2.625rem;
   font-weight: 400;
   color: #333;
   text-align: right;
@@ -1025,7 +1025,7 @@ function syncColor(source) {
   caret-color: #e74c3c;
 }
 .rate-result {
-  font-size: 36px;
+  font-size: 2.25rem;
   font-weight: 400;
   color: #333;
   text-align: right;
@@ -1037,7 +1037,7 @@ function syncColor(source) {
   margin: 16px 0;
 }
 .rate-footer {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: #ccc;
   text-align: center;
   margin-top: 20px;
@@ -1055,7 +1055,7 @@ function syncColor(source) {
   border: none;
   background: #f0f0f0;
   color: #333;
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 400;
   border-radius: 50%;
   aspect-ratio: 1 / 1;
@@ -1074,20 +1074,20 @@ function syncColor(source) {
 .rate-key.red {
   color: #e74c3c;
   background: transparent;
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 .rate-key.red:active { background: #ffeaea; }
 .rate-key.op {
   color: #e74c3c;
   background: #fff0f0;
-  font-size: 26px;
+  font-size: 1.625rem;
 }
 .rate-key.op:active { background: #ffdada; }
 .rate-key.eq {
   background: #e74c3c;
   color: #fff;
   border-radius: 16px;
-  font-size: 28px;
+  font-size: 1.75rem;
   font-weight: 500;
 }
 .rate-key.eq:active { background: #c0392b; }
@@ -1117,14 +1117,14 @@ function syncColor(source) {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   border-bottom: 1px solid #f0f0f0;
 }
 .currency-picker-header button {
   background: none;
   border: none;
-  font-size: 18px;
+  font-size: 1.125rem;
   color: #999;
   cursor: pointer;
 }
@@ -1150,11 +1150,11 @@ function syncColor(source) {
   color: #e74c3c;
 }
 .currency-picker-name {
-  font-size: 16px;
+  font-size: 1rem;
   color: #333;
 }
 .currency-picker-code {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: #bbb;
   font-weight: 500;
 }
@@ -1168,7 +1168,7 @@ function syncColor(source) {
   padding: 12px;
   border: 1px solid #eee;
   border-radius: 12px;
-  font-size: 14px;
+  font-size: 0.875rem;
   margin-bottom: 12px;
   outline: none;
   font-family: inherit;
@@ -1180,14 +1180,14 @@ function syncColor(source) {
   border-radius: 16px;
   text-align: center;
 }
-.astro-sign { font-size: 36px; margin-bottom: 6px; }
-.astro-name { font-size: 18px; font-weight: 600; }
-.astro-date { font-size: 13px; opacity: 0.9; margin-top: 6px; }
+.astro-sign { font-size: 2.25rem; margin-bottom: 6px; }
+.astro-name { font-size: 1.125rem; font-weight: 600; }
+.astro-date { font-size: 0.8125rem; opacity: 0.9; margin-top: 6px; }
 .lunar-card { text-align: center; }
 .lunar-row { margin-bottom: 12px; }
 .lunar-row:last-child { margin-bottom: 0; }
-.lunar-row .label { font-size: 12px; color: #999; margin-bottom: 4px; }
-.lunar-row .value { font-size: 18px; font-weight: 600; color: #333; }
+.lunar-row .label { font-size: 0.75rem; color: #999; margin-bottom: 4px; }
+.lunar-row .value { font-size: 1.125rem; font-weight: 600; color: #333; }
 
 /* ========== 进制 ========== */
 .base-panel {
@@ -1205,7 +1205,7 @@ function syncColor(source) {
   border: 1px solid #eee;
   border-radius: 12px;
   background: #f9f9f9;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-family: inherit;
   outline: none;
 }
@@ -1214,7 +1214,7 @@ function syncColor(source) {
   padding: 10px 12px;
   border: 1px solid #eee;
   border-radius: 12px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-family: monospace;
   outline: none;
 }
@@ -1224,7 +1224,7 @@ function syncColor(source) {
   padding: 14px;
   border-radius: 12px;
   font-family: monospace;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 .base-result div { margin-bottom: 6px; }
 .base-result div:last-child { margin-bottom: 0; }
@@ -1243,17 +1243,17 @@ function syncColor(source) {
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 1rem;
   text-shadow: 0 1px 3px rgba(0,0,0,0.4);
 }
 .color-row { margin-bottom: 12px; }
-.color-row label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; }
+.color-row label { display: block; font-size: 0.75rem; color: #666; margin-bottom: 4px; }
 .color-row input {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid #eee;
   border-radius: 12px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-family: monospace;
   outline: none;
 }
