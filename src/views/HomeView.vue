@@ -2,16 +2,22 @@
 <template>
   <div class="home-view">
     <div class="cat-grid" :class="`grid-${store.navGrid}`">
-      <CategoryCard v-for="cat in store.categories" :key="cat.id" :cat="cat" />
+      <CategoryCard v-for="cat in store.categories" :key="cat.id" :cat="cat" :layout="navLayoutMode" />
     </div>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useAppStore } from '../stores/app'
 import CategoryCard from '../components/CategoryCard.vue'
 
 const store = useAppStore()
+const navLayoutMode = computed(() => {
+  if (store.navGrid === 'list') return 'list'
+  if (store.navGrid === '3x3') return 'nav3'
+  return 'nav2'
+})
 
 </script>
 

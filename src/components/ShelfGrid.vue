@@ -4,7 +4,7 @@
       <span class="shelf-title">{{ title }}</span>
     </div>
     <div class="tool-grid" :class="gridClass">
-      <ToolCard v-for="tool in tools" :key="tool.id" :tool="tool" />
+      <ToolCard v-for="tool in tools" :key="tool.id" :tool="tool" :layout="layoutMode" />
     </div>
   </div>
 </template>
@@ -20,6 +20,11 @@ const props = defineProps({
 })
 
 const store = useAppStore()
+const layoutMode = computed(() => {
+  if (store.grid === 'list') return 'list'
+  if (store.grid === '4x4') return 'grid4'
+  return 'grid3'
+})
 const gridClass = computed(() => {
   if (store.grid === 'list') return 'grid-list'
   return `grid-${store.grid.replace('x', '')}`
