@@ -31,6 +31,7 @@
       { id: 'random', name: '随机数', icon: '🎲', type: 'random', desc: '生成随机' },
       { id: 'barrage', name: '手持弹幕', icon: '📢', type: 'barrage', desc: '全屏弹幕' },
       { id: 'calc', name: '计算器', icon: '🧮', type: 'calc', desc: '简单计算' },
+      { id: 'clicker', name: '连点器', icon: '👆', type: 'clicker', desc: '自动连点/手速测试' },
     ]
   },
   {
@@ -76,15 +77,16 @@ export const toolTypeMap = {
   jsurl: () => import('../tools/JsUrlTool.vue'),
   codereplace: () => import('../tools/CodeReplaceTool.vue'),
   image: () => import('../tools/ImageTool.vue'),
+  clicker: () => import('../tools/ClickerTool.vue'),
   formathub: () => import('../tools/FormatHubTool.vue'),
 }
 
 export const toolIcons = {
   rename: '📁', proofread: '📋', citation: '📑', base64: '🔐', qrcode: '📱', timer: '⏱️', random: '🎲',
-  barrage: '📢', color: '🎨', text: '📝', calc: '🧮', image: '🗜️',
+  barrage: '📢', color: '🎨', text: '📝', calc: '🧮', image: '🗜️', clicker: '👆',
 }
 
 export const toolDescs = {
   rename: '批量重命名', proofread: '排版检查修复', citation: '参考文献管理', base64: '编解码', qrcode: '生成识别', timer: '计时器', random: '生成随机',
-  barrage: '全屏弹幕', color: '提取颜色', text: '文本处理', calc: '简单计算', image: '图片处理',
+  barrage: '全屏弹幕', color: '提取颜色', text: '文本处理', calc: '简单计算', image: '图片处理', clicker: '自动连点/手速测试',
 }
