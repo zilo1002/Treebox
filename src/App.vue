@@ -40,8 +40,6 @@
     <BottomNav />
   </div>
   <SettingsModal />
-  <CreateCategoryModal />
-  <AddToolModal />
 </template>
 
 <script setup>
@@ -54,8 +52,6 @@ import AppHeader from './components/AppHeader.vue'
 import BottomNav from './components/BottomNav.vue'
 import SearchBar from './components/SearchBar.vue'
 import SettingsModal from './components/SettingsModal.vue'
-import CreateCategoryModal from './components/CreateCategoryModal.vue'
-import AddToolModal from './components/AddToolModal.vue'
 
 const store = useAppStore()
 const router = useRouter()
