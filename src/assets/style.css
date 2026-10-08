@@ -83,3 +83,33 @@ body.glass-on .cat-card {
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
 }
+
+/* 书架布局兜底：不依赖懒加载分块 CSS，主样式表直接保证次分类三种模式 */
+.tool-grid { display: grid; gap: 10px; }
+.tool-grid.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.tool-grid.grid-4 { grid-template-columns: repeat(4, 1fr); }
+.tool-grid.grid-list { grid-template-columns: 1fr; }
+@media (min-width: 640px) {
+  .tool-grid.grid-3 { grid-template-columns: repeat(4, 1fr); }
+  .tool-grid.grid-4 { grid-template-columns: repeat(5, 1fr); }
+}
+@media (min-width: 900px) {
+  .tool-grid.grid-3 { grid-template-columns: repeat(5, 1fr); }
+  .tool-grid.grid-4 { grid-template-columns: repeat(6, 1fr); }
+}
+.tool-card { background: var(--bg-raised); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 8px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90px; }
+.tool-card--list { flex-direction: row; text-align: left; padding: 10px 14px; min-height: auto; gap: 12px; justify-content: flex-start; box-shadow: 0 1px 4px var(--shadow); }
+.tool-card--list .t-icon { margin-bottom: 0; font-size: 1.375rem; }
+.tool-card--list .t-info { flex: 1; }
+.tool-card--grid3 { min-height: 68px; padding: 8px 4px; }
+.tool-card--grid3 .t-icon { font-size: 1.25rem; margin-bottom: 4px; }
+.tool-card--grid3 .t-desc { display: none; }
+.tool-card--grid4 { min-height: 58px; padding: 6px 2px; }
+.tool-card--grid4 .t-icon { font-size: 1.125rem; margin-bottom: 3px; }
+.tool-card--grid4 .t-name { font-size: 0.6875rem; }
+.tool-card--grid4 .t-desc { display: none; }
+
+/* 毛玻璃开时，给整个壳一层有层次的底，半透明表面才有东西可糊 */
+body.glass-on .app-shell {
+  background: linear-gradient(155deg, var(--bg-raised) 0%, var(--bg) 45%, var(--bg-muted) 78%, var(--bg-strong) 130%);
+}

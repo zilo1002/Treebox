@@ -1,4 +1,4 @@
-﻿export default {
+export default {
   // 通用
   appName: '我的工具箱',
   open: '点击打开',
@@ -52,6 +52,7 @@
 
   // 设置
   settings: {
+    reset: '重置',
     title: '设置',
     language: '语言',
     appearance: '外观模式',

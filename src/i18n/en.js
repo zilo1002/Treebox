@@ -1,4 +1,4 @@
-﻿export default {
+export default {
   appName: 'My Toolbox',
   open: 'Tap to open',
   back: 'Back',
@@ -44,6 +44,7 @@
   },
 
   settings: {
+    reset: 'Reset',
     title: 'Settings',
     language: 'Language',
     appearance: 'Appearance',

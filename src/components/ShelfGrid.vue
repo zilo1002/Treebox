@@ -27,7 +27,8 @@ const layoutMode = computed(() => {
 })
 const gridClass = computed(() => {
   if (store.grid === 'list') return 'grid-list'
-  return `grid-${store.grid.replace('x', '')}`
+  if (store.grid === '4x4') return 'grid-4'
+  return 'grid-3'
 })
 </script>
 

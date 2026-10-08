@@ -1,7 +1,7 @@
 <template>
   <div class="fav-view">
     <div v-if="store.favTools.length" class="tool-grid" :class="gridClass">
-      <ToolCard v-for="tool in store.favTools" :key="tool.id" :tool="tool" />
+      <ToolCard v-for="tool in store.favTools" :key="tool.id" :tool="tool" :layout="layoutMode" />
     </div>
     <div v-else class="empty-state">
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -19,9 +19,15 @@ import { useAppStore } from '../stores/app'
 import ToolCard from '../components/ToolCard.vue'
 
 const store = useAppStore()
+const layoutMode = computed(() => {
+  if (store.grid === 'list') return 'list'
+  if (store.grid === '4x4') return 'grid4'
+  return 'grid3'
+})
 const gridClass = computed(() => {
   if (store.grid === 'list') return 'grid-list'
-  return `grid-${store.grid.replace('x', '')}`
+  if (store.grid === '4x4') return 'grid-4'
+  return 'grid-3'
 })
 </script>
 
