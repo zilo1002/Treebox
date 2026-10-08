@@ -61,7 +61,7 @@ input {
   border: 1px solid var(--border);
   background: var(--bg-muted);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 0.875rem;
   outline: none;
 }
 input:focus { border-color: var(--accent); }
@@ -70,7 +70,7 @@ canvas { border-radius: 8px; border: 1px solid var(--border); }
 .btn-primary, .btn-secondary {
   padding: 8px 16px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   border: none;

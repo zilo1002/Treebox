@@ -51,7 +51,7 @@ onUnmounted(stop)
 <style scoped>
 .timer-tool { text-align: center; }
 .timer-display {
-  font-size: 48px;
+  font-size: 3rem;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   margin: 24px 0;
@@ -59,7 +59,7 @@ onUnmounted(stop)
 }
 .actions { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; }
 .form-field { text-align: left; max-width: 200px; margin: 0 auto; }
-.form-field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+.form-field label { display: block; font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 6px; }
 .form-field input {
   width: 100%;
   padding: 10px 12px;
@@ -67,13 +67,13 @@ onUnmounted(stop)
   border: 1px solid var(--border);
   background: var(--bg-muted);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 0.875rem;
   outline: none;
 }
 .btn-primary, .btn-secondary {
   padding: 8px 16px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   border: none;

@@ -45,7 +45,7 @@ textarea {
   border: 1px solid var(--border);
   background: var(--bg-muted);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 0.875rem;
   resize: vertical;
   outline: none;
   font-family: inherit;
@@ -55,7 +55,7 @@ textarea[readonly] { background: var(--bg); }
 .btn-primary, .btn-secondary {
   padding: 8px 16px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   border: none;

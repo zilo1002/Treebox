@@ -257,13 +257,13 @@ function formatSize(bytes) {
   margin-bottom: 12px;
 }
 .upload-title {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 4px;
 }
 .upload-hint {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-tertiary);
 }
 
@@ -290,7 +290,7 @@ function formatSize(bytes) {
 }
 .preview-label {
   padding: 8px 12px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-secondary);
   background: var(--bg-raised);
@@ -309,14 +309,14 @@ function formatSize(bytes) {
   justify-content: center;
   min-height: 120px;
   color: var(--text-tertiary);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 .preview-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   padding: 8px 12px;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
   background: var(--bg-raised);
   border-top: 1px solid var(--border);
@@ -345,13 +345,13 @@ function formatSize(bytes) {
   gap: 2px;
 }
 .stat-label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 .stat-value {
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 600;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
@@ -373,7 +373,7 @@ function formatSize(bytes) {
 .control-group label {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text-secondary);
   margin-bottom: 8px;
@@ -397,7 +397,7 @@ function formatSize(bytes) {
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
@@ -424,7 +424,7 @@ function formatSize(bytes) {
 .btn-primary, .btn-secondary {
   padding: 10px 16px;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   border: none;

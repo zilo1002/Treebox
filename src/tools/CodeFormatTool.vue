@@ -248,9 +248,9 @@ function clear() {
   border-color: var(--accent, #3b82f6);
   background: rgba(59,130,246,0.04);
 }
-.upload-icon { font-size: 48px; margin-bottom: 12px; }
-.upload-title { font-size: 16px; font-weight: 500; color: var(--text-color, #333); margin-bottom: 6px; }
-.upload-sub { font-size: 13px; color: var(--text-secondary, #999); }
+.upload-icon { font-size: 3rem; margin-bottom: 12px; }
+.upload-title { font-size: 1rem; font-weight: 500; color: var(--text-color, #333); margin-bottom: 6px; }
+.upload-sub { font-size: 0.8125rem; color: var(--text-secondary, #999); }
 
 .preview-wrap { display: flex; flex-direction: column; gap: 12px; }
 .info-bar {
@@ -258,9 +258,9 @@ function clear() {
   justify-content: space-between;
 }
 .info-left { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.filename { font-weight: 600; font-size: 15px; color: var(--text-color, #333); }
+.filename { font-weight: 600; font-size: 0.9375rem; color: var(--text-color, #333); }
 .badge {
-  font-size: 11px; padding: 2px 8px; border-radius: 20px;
+  font-size: 0.6875rem; padding: 2px 8px; border-radius: 20px;
   background: var(--bg-secondary, #f3f4f6); color: var(--text-secondary, #666);
 }
 .badge.lang { background: #dbeafe; color: #1e40af; }
@@ -271,7 +271,7 @@ function clear() {
 .btn-sm {
   padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border-color, #e5e7eb);
   background: var(--bg-card, #fff); color: var(--text-color, #333);
-  font-size: 13px; cursor: pointer; transition: all 0.15s;
+  font-size: 0.8125rem; cursor: pointer; transition: all 0.15s;
 }
 .btn-sm:hover { background: var(--bg-secondary, #f9fafb); }
 .btn-sm.primary { background: var(--accent, #3b82f6); color: #fff; border-color: var(--accent, #3b82f6); }
@@ -282,23 +282,23 @@ function clear() {
   background: var(--bg-secondary, #f9fafb);
   border: 1px solid var(--border-color, #e5e7eb);
 }
-.format-title { font-weight: 600; font-size: 14px; color: var(--text-color, #333); margin-bottom: 8px; }
+.format-title { font-weight: 600; font-size: 0.875rem; color: var(--text-color, #333); margin-bottom: 8px; }
 .format-body { display: flex; flex-direction: column; gap: 10px; }
-.format-desc { font-size: 13px; color: var(--text-secondary, #6b7280); line-height: 1.5; }
+.format-desc { font-size: 0.8125rem; color: var(--text-secondary, #6b7280); line-height: 1.5; }
 .format-row {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
 }
-.format-row label { font-size: 13px; font-weight: 500; color: var(--text-color, #374151); }
+.format-row label { font-size: 0.8125rem; font-weight: 500; color: var(--text-color, #374151); }
 .bytes-input {
   width: 80px; padding: 6px 10px; border-radius: 8px;
   border: 1px solid var(--border-color, #e5e7eb);
   background: var(--bg-card, #fff); color: var(--text-color, #333);
-  font-size: 14px; text-align: center;
+  font-size: 0.875rem; text-align: center;
 }
-.bytes-unit { font-size: 13px; color: var(--text-secondary, #6b7280); }
+.bytes-unit { font-size: 0.8125rem; color: var(--text-secondary, #6b7280); }
 .format-warn {
   padding: 8px 12px; border-radius: 8px;
-  background: #fef2f2; color: #991b1b; font-size: 13px;
+  background: #fef2f2; color: #991b1b; font-size: 0.8125rem;
   border: 1px solid #fecaca;
 }
 .format-warn.mild {
@@ -314,7 +314,7 @@ function clear() {
 .line-nums {
   padding: 12px 8px; background: var(--bg-secondary, #f9fafb);
   border-right: 1px solid var(--border-color, #e5e7eb);
-  font-family: 'SF Mono', Monaco, monospace; font-size: 13px;
+  font-family: 'SF Mono', Monaco, monospace; font-size: 0.8125rem;
   color: var(--text-secondary, #9ca3af); text-align: right;
   line-height: 1.6; overflow: hidden; user-select: none;
   min-width: 40px;
@@ -322,13 +322,13 @@ function clear() {
 .line-num { height: 1.6em; }
 .code-area {
   flex: 1; padding: 12px; border: none; outline: none; resize: none;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; font-size: 13px;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; font-size: 0.8125rem;
   line-height: 1.6; color: var(--text-color, #374151); background: transparent;
   white-space: pre; overflow: auto; tab-size: 2;
 }
 .large-tip {
   padding: 10px 14px; border-radius: 10px;
-  background: #fffbeb; color: #92400e; font-size: 13px;
+  background: #fffbeb; color: #92400e; font-size: 0.8125rem;
   border: 1px solid #fcd34d;
 }
 </style>

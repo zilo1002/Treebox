@@ -33,7 +33,7 @@ function generate() {
 .random-tool { text-align: center; }
 .form-row { display: flex; gap: 12px; margin-bottom: 16px; }
 .form-field { flex: 1; text-align: left; }
-.form-field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+.form-field label { display: block; font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 6px; }
 .form-field input {
   width: 100%;
   padding: 10px 12px;
@@ -41,12 +41,12 @@ function generate() {
   border: 1px solid var(--border);
   background: var(--bg-muted);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 0.875rem;
   outline: none;
 }
 .generate { width: 100%; margin-bottom: 20px; }
 .result {
-  font-size: 42px;
+  font-size: 2.625rem;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   color: var(--accent);
@@ -54,7 +54,7 @@ function generate() {
 .btn-primary {
   padding: 10px 16px;
   border-radius: 8px;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 500;
   cursor: pointer;
   border: none;

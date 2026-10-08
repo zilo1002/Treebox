@@ -227,13 +227,13 @@ function copyScript() {
   margin-bottom: 12px;
 }
 .upload-title {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 4px;
 }
 .upload-hint {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-tertiary);
 }
 
@@ -261,7 +261,7 @@ function copyScript() {
 }
 .rule-field label {
   display: block;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-secondary);
   margin-bottom: 4px;
@@ -273,7 +273,7 @@ function copyScript() {
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 0.8125rem;
   outline: none;
 }
 .rule-field input:focus, .rule-field select:focus {
@@ -298,7 +298,7 @@ function copyScript() {
   align-items: center;
   padding: 8px 12px;
   gap: 8px;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 .list-header {
   background: var(--bg);
@@ -316,7 +316,7 @@ function copyScript() {
 .col-num {
   text-align: center;
   color: var(--text-tertiary);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .col-old, .col-new-input {
   overflow: hidden;
@@ -332,7 +332,7 @@ function copyScript() {
   border: 1px solid transparent;
   background: transparent;
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 0.8125rem;
   outline: none;
 }
 .col-new-input:hover, .col-new-input:focus {
@@ -358,7 +358,7 @@ function copyScript() {
 .btn-primary, .btn-secondary {
   padding: 10px 16px;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   border: none;

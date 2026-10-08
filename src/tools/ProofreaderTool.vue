@@ -432,8 +432,8 @@ function reset() {
   background: color-mix(in srgb, var(--accent) 4%, var(--bg-muted));
 }
 .upload-inner svg { color: var(--text-tertiary); margin-bottom: 12px; }
-.upload-title { font-size: 15px; font-weight: 500; color: var(--text-primary); margin-bottom: 4px; }
-.upload-hint { font-size: 13px; color: var(--text-tertiary); }
+.upload-title { font-size: 0.9375rem; font-weight: 500; color: var(--text-primary); margin-bottom: 4px; }
+.upload-hint { font-size: 0.8125rem; color: var(--text-tertiary); }
 
 /* Workspace */
 .workspace { display: flex; flex-direction: column; height: 100%; min-height: 400px; }
@@ -445,8 +445,8 @@ function reset() {
   flex-wrap: wrap;
 }
 .file-info { display: flex; align-items: center; gap: 10px; }
-.file-name { font-size: 14px; font-weight: 500; }
-.file-meta { font-size: 12px; color: var(--text-tertiary); }
+.file-name { font-size: 0.875rem; font-weight: 500; }
+.file-meta { font-size: 0.75rem; color: var(--text-tertiary); }
 .topbar-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .btn-sm {
   padding: 5px 10px;
@@ -454,7 +454,7 @@ function reset() {
   border: 1px solid var(--border);
   background: var(--bg-raised);
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -481,7 +481,7 @@ function reset() {
 }
 .panel-header {
   padding: 10px 12px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   border-bottom: 1px solid var(--border);
   background: var(--bg-raised);
@@ -492,7 +492,7 @@ function reset() {
   align-items: center;
   gap: 6px;
   padding: 6px 4px;
-  font-size: 12px;
+  font-size: 0.75rem;
   cursor: pointer;
   border-radius: 6px;
   transition: background 0.1s;
@@ -501,7 +501,7 @@ function reset() {
 .rule-item input { accent-color: var(--accent); }
 .rule-name { flex: 1; }
 .rule-badge {
-  font-size: 10px;
+  font-size: 0.625rem;
   padding: 1px 5px;
   border-radius: 4px;
   font-weight: 500;
@@ -520,7 +520,7 @@ function reset() {
 }
 .editor-header {
   padding: 8px 12px;
-  font-size: 12px;
+  font-size: 0.75rem;
   border-bottom: 1px solid var(--border);
   background: var(--bg-raised);
 }
@@ -533,7 +533,7 @@ function reset() {
   border: none;
   background: var(--bg);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 24px;
   resize: none;
   outline: none;
@@ -546,7 +546,7 @@ function reset() {
   position: absolute;
   top: 37px; left: 0; right: 0; bottom: 0;
   padding: 12px;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 24px;
   white-space: pre;
   overflow-wrap: normal;
@@ -569,7 +569,7 @@ function reset() {
 }
 .issue-count {
   margin-left: auto;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
   background: var(--bg-muted);
   padding: 1px 6px;
@@ -594,11 +594,11 @@ function reset() {
   justify-content: space-between;
   margin-bottom: 4px;
 }
-.issue-type { font-size: 11px; font-weight: 500; color: var(--text-secondary); }
-.issue-pos { font-size: 11px; color: var(--text-tertiary); }
-.issue-msg { font-size: 12px; color: var(--text-primary); margin-bottom: 4px; }
+.issue-type { font-size: 0.6875rem; font-weight: 500; color: var(--text-secondary); }
+.issue-pos { font-size: 0.6875rem; color: var(--text-tertiary); }
+.issue-msg { font-size: 0.75rem; color: var(--text-primary); margin-bottom: 4px; }
 .issue-ctx {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--text-tertiary);
   background: var(--bg-muted);
   padding: 4px 6px;
@@ -612,14 +612,14 @@ function reset() {
 .btn-fix, .btn-ignore {
   padding: 3px 8px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 0.6875rem;
   cursor: pointer;
   border: none;
 }
 .btn-fix { background: var(--accent); color: #fff; }
 .btn-ignore { background: var(--bg-muted); color: var(--text-secondary); border: 1px solid var(--border); }
 .empty-issues { text-align: center; padding: 24px 12px; color: var(--text-tertiary); }
-.empty-issues .sub { font-size: 12px; margin-top: 4px; }
+.empty-issues .sub { font-size: 0.75rem; margin-top: 4px; }
 
 @media (max-width: 768px) {
   .rules-panel, .issues-panel { width: 160px; }

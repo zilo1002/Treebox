@@ -42,7 +42,7 @@ function show() {
 
 <style scoped>
 .barrage-tool { display: flex; flex-direction: column; gap: 14px; }
-.form-field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+.form-field label { display: block; font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 6px; }
 .form-field label span { color: var(--accent); font-weight: 600; margin-left: 4px; }
 .form-field input[type="text"] {
   width: 100%;
@@ -51,7 +51,7 @@ function show() {
   border: 1px solid var(--border);
   background: var(--bg-muted);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 0.875rem;
   outline: none;
 }
 .form-field input[type="range"] { width: 100%; accent-color: var(--accent); }
@@ -68,7 +68,7 @@ function show() {
 .btn-primary {
   padding: 10px 16px;
   border-radius: 8px;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 500;
   cursor: pointer;
   border: none;

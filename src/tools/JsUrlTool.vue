@@ -115,13 +115,13 @@ function download(ext) {
   flex: 1; padding: 12px 14px; border-radius: 12px;
   border: 1px solid var(--border-color, #e5e7eb);
   background: var(--bg-card, #fff); color: var(--text-color, #333);
-  font-size: 14px; outline: none; transition: border-color 0.2s;
+  font-size: 0.875rem; outline: none; transition: border-color 0.2s;
 }
 .url-input:focus { border-color: var(--accent, #3b82f6); }
 .fetch-btn {
   padding: 12px 20px; border-radius: 12px; border: none;
   background: var(--accent, #3b82f6); color: #fff;
-  font-size: 14px; font-weight: 500; cursor: pointer;
+  font-size: 0.875rem; font-weight: 500; cursor: pointer;
   white-space: nowrap; transition: opacity 0.15s;
 }
 .fetch-btn:hover:not(:disabled) { opacity: 0.9; }
@@ -133,20 +133,20 @@ function download(ext) {
   background: #fef2f2; color: #991b1b;
   border: 1px solid #fecaca;
 }
-.error-icon { font-size: 20px; }
-.error-text { font-size: 14px; line-height: 1.5; }
+.error-icon { font-size: 1.25rem; }
+.error-text { font-size: 0.875rem; line-height: 1.5; }
 
 .preview-wrap { display: flex; flex-direction: column; gap: 10px; }
 .preview-bar {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
   justify-content: space-between;
 }
-.preview-size { font-size: 13px; color: var(--text-secondary, #6b7280); }
+.preview-size { font-size: 0.8125rem; color: var(--text-secondary, #6b7280); }
 .preview-actions { display: flex; gap: 6px; }
 .btn-sm {
   padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border-color, #e5e7eb);
   background: var(--bg-card, #fff); color: var(--text-color, #333);
-  font-size: 13px; cursor: pointer; transition: all 0.15s;
+  font-size: 0.8125rem; cursor: pointer; transition: all 0.15s;
 }
 .btn-sm:hover { background: var(--bg-secondary, #f9fafb); }
 .btn-sm.primary { background: var(--accent, #3b82f6); color: #fff; border-color: var(--accent, #3b82f6); }
@@ -158,7 +158,7 @@ function download(ext) {
   border: 1px solid var(--border-color, #e5e7eb);
   background: var(--bg-card, #fff);
   font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-  font-size: 13px; line-height: 1.6; color: var(--text-color, #374151);
+  font-size: 0.8125rem; line-height: 1.6; color: var(--text-color, #374151);
   resize: vertical; outline: none; white-space: pre; overflow: auto; tab-size: 2;
 }
 </style>

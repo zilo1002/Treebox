@@ -50,13 +50,13 @@ function copy() {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 500;
   color: #fff;
   text-shadow: 0 1px 3px rgba(0,0,0,0.3);
   border: 1px solid var(--border);
 }
-.form-field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+.form-field label { display: block; font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 6px; }
 .form-field input {
   width: 100%;
   padding: 10px 12px;
@@ -64,7 +64,7 @@ function copy() {
   border: 1px solid var(--border);
   background: var(--bg-muted);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 0.875rem;
   outline: none;
 }
 .form-field input[type="color"] {
@@ -75,7 +75,7 @@ function copy() {
 .btn-secondary {
   padding: 10px 16px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   border: 1px solid var(--border);

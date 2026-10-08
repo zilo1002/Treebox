@@ -40,7 +40,7 @@ textarea {
   border: 1px solid var(--border);
   background: var(--bg-muted);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 0.875rem;
   resize: vertical;
   outline: none;
   font-family: inherit;
@@ -51,13 +51,13 @@ textarea:focus { border-color: var(--accent); }
   border-radius: 8px;
   background: var(--bg-raised);
   border: 1px solid var(--border);
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-secondary);
 }
 .btn-secondary {
   padding: 6px 12px;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
   border: 1px solid var(--border);
