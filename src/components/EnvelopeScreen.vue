@@ -58,7 +58,7 @@ function open() {
 }
 
 function bokehStyle(n) {
-  const colors = ['rgba(255, 220, 150, 0.3)', 'rgba(255, 200, 180, 0.25)', 'rgba(255, 230, 200, 0.2)']
+  const colors = ['rgba(201, 138, 75, 0.28)', 'rgba(107, 143, 113, 0.24)', 'rgba(193, 102, 74, 0.20)']
   const color = colors[n % colors.length]
   const size = 8 + Math.random() * 20
   const left = Math.random() * 100
@@ -77,7 +77,7 @@ function bokehStyle(n) {
 }
 
 function revealParticleStyle(n) {
-  const colors = ['#FFAA5C', '#FFD4A8', '#FF8C66', '#FFB88C']
+  const colors = ['#C98A4B', '#6B8F71', '#C1664A', '#8A739E']
   const color = colors[n % colors.length]
   const left = 30 + Math.random() * 40
   const delay = Math.random() * 0.5
@@ -113,7 +113,7 @@ function revealParticleStyle(n) {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 50% 50%, #FDFCFA 0%, #F8F6F3 100%);
+    radial-gradient(ellipse at 50% 50%, #FAFBF7 0%, #EEF3EC 100%);
 }
 
 /* 边缘暗角 */
@@ -121,7 +121,7 @@ function revealParticleStyle(n) {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.03) 100%);
+  background: radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(37,53,42,0.05) 100%);
   pointer-events: none;
 }
 
@@ -163,7 +163,7 @@ function revealParticleStyle(n) {
   font-family: 'Playfair Display', 'SimSun', 'STSong', Georgia, serif;
   font-size: 26px;
   font-weight: 500;
-  color: #3D3D3D;
+  color: #25352A;
   letter-spacing: 3px;
   margin: 0;
 }
@@ -185,11 +185,11 @@ function revealParticleStyle(n) {
 .envelope-body {
   position: absolute;
   inset: 0;
-  background: #FFFFFF;
+  background: #FAFBF7;
   border-radius: 16px;
   box-shadow:
-    0 15px 40px rgba(0, 0, 0, 0.06),
-    0 5px 15px rgba(0, 0, 0, 0.03);
+    0 15px 40px rgba(53, 107, 87, 0.12),
+    0 5px 15px rgba(53, 107, 87, 0.06);
   overflow: hidden;
 }
 
@@ -197,7 +197,7 @@ function revealParticleStyle(n) {
 .body-border {
   position: absolute;
   inset: 0;
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(53, 107, 87, 0.10);
   border-radius: 16px;
   pointer-events: none;
 }
@@ -218,7 +218,7 @@ function revealParticleStyle(n) {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, #E8E4DE 0%, #F0EDE8 100%);
+  background: linear-gradient(180deg, #D6E0D2 0%, #E3EBE0 100%);
   clip-path: polygon(0 0, 50% 100%, 100% 0);
   border-radius: 16px 16px 0 0;
 }
@@ -241,7 +241,7 @@ function revealParticleStyle(n) {
   left: 0;
   right: 0;
   height: 50%;
-  background: linear-gradient(180deg, #FFB5B5 0%, #FFAA9C 100%);
+  background: linear-gradient(180deg, #D98C6B 0%, #CE7757 100%);
   border-radius: 24px 24px 0 0;
 }
 
@@ -252,10 +252,10 @@ function revealParticleStyle(n) {
   right: 0;
   height: 50%;
   background:
-    radial-gradient(circle at 30% 30%, #FFD4A8 1px, transparent 2px),
-    radial-gradient(circle at 70% 50%, #FFD4A8 1px, transparent 2px),
-    radial-gradient(circle at 50% 70%, #FFD4A8 1px, transparent 2px),
-    linear-gradient(180deg, #FF9C6B 0%, #FF7F4D 100%);
+    radial-gradient(circle at 30% 30%, #E8B48C 1px, transparent 2px),
+    radial-gradient(circle at 70% 50%, #E8B48C 1px, transparent 2px),
+    radial-gradient(circle at 50% 70%, #E8B48C 1px, transparent 2px),
+    linear-gradient(180deg, #C1664A 0%, #A84F35 100%);
   border-radius: 0 0 24px 24px;
 }
 
@@ -283,7 +283,7 @@ function revealParticleStyle(n) {
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 14px;
   font-weight: 400;
-  color: #888888;
+  color: #93A496;
   background: none;
   border: none;
   cursor: pointer;
@@ -298,7 +298,7 @@ function revealParticleStyle(n) {
 }
 
 .text-btn:hover {
-  color: #666666;
+  color: #356B57;
 }
 
 .text-btn:disabled {
