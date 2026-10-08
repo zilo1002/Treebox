@@ -46,4 +46,15 @@ defineProps({ tool: Object, list: Boolean })
 }
 :global(.grid-list) .t-icon { margin-bottom: 0; font-size: 1.375rem; }
 :global(.grid-list) .t-info { flex: 1; }
+
+/* 3×3 / 4×4：小图标模式，一排三个 / 四个，只留图标和名字 */
+:global(.grid-3) .tool-card { min-height: 68px; padding: 8px 4px; }
+:global(.grid-3) .t-icon { font-size: 1.25rem; margin-bottom: 4px; }
+:global(.grid-3) .t-desc { display: none; }
+:global(.grid-4) .tool-card { min-height: 58px; padding: 6px 2px; }
+:global(.grid-4) .t-icon { font-size: 1.125rem; margin-bottom: 3px; }
+:global(.grid-4) .t-name { font-size: 0.6875rem; }
+:global(.grid-4) .t-desc { display: none; }
+/* 列表模式：整行展示，不加左边的色条 */
+:global(.grid-list) .tool-card { border-left: 1px solid var(--border); }
 </style>

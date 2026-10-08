@@ -1,5 +1,5 @@
 <template>
-  <div class="cat-card" @click="$router.push(`/cat/${cat.id}`)" :style="{ borderTopColor: cat.color || 'var(--accent)', borderLeftColor: cat.color || 'var(--accent)' }">
+  <div class="cat-card" @click="$router.push(`/cat/${cat.id}`)" :style="{ borderTopColor: cat.color || 'var(--accent)' }">
     <div class="cat-icon">{{ cat.icon }}</div>
     <div class="cat-name">{{ cat.name }}</div>
     <div class="cat-count">{{ cat.tools.length }} 个工具</div>
@@ -33,8 +33,11 @@ defineProps({ cat: Object })
   align-items: center;
   gap: 12px;
   border-top-width: 1px;
-  border-left: 3px solid;
 }
 :global(.grid-list) .cat-icon { margin-bottom: 0; }
 :global(.grid-list) .cat-count { margin-left: auto; margin-top: 0; }
+:global(.grid-3x3) .cat-card { padding: 10px 6px; text-align: center; }
+:global(.grid-3x3) .cat-icon { font-size: 1.375rem; margin-bottom: 4px; }
+:global(.grid-3x3) .cat-name { font-size: 0.75rem; }
+:global(.grid-3x3) .cat-count { display: none; }
 </style>
