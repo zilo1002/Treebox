@@ -478,8 +478,8 @@ export const CATEGORIES = {
     emoji: '💾',
     title: '数据与压缩包',
     titleEn: 'Data & Archives',
-    desc: 'JSON、CSV、XML、YAML 等数据格式互转',
-    descEn: 'JSON, CSV, XML, YAML conversion',
+    desc: 'JSON、CSV、XML、YAML 等互转，ZIP 解压',
+    descEn: 'JSON, CSV, XML, YAML conversion, ZIP extract',
     color: 'emerald',
     bgGradient: 'from-emerald-500/20 to-teal-500/10',
     borderColor: 'border-emerald-500/30',
@@ -492,7 +492,8 @@ export const CATEGORIES = {
       xml: { label: 'XML', labelEn: 'XML', ext: 'xml' },
       csv: { label: 'CSV', labelEn: 'CSV', ext: 'csv' },
       yaml: { label: 'YAML', labelEn: 'YAML', ext: 'yaml' },
-      zip: { label: 'ZIP 压缩包', labelEn: 'ZIP Archive', ext: 'zip' }
+      zip: { label: 'ZIP 压缩包', labelEn: 'ZIP Archive', ext: 'zip' },
+      extract: { label: '解压提取', labelEn: 'Extract files', ext: 'extract' }
     }
   },
   pdf: {
@@ -544,7 +545,7 @@ export const SUPPORTED_MATRIX = {
     csv:   ['json','xml','csv','yaml'],
     yaml:  ['json','xml','csv','yaml'],
     yml:   ['json','xml','csv','yaml'],
-    zip:   ['zip']
+    zip:   ['extract', 'zip']
   }
 };
 
