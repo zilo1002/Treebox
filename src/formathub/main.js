@@ -8,6 +8,7 @@ import { convData } from './converters/data.js';
 import { convDoc, mergeDocs } from './converters/document.js';
 import { convArchive } from './converters/archive.js';
 import { convEbook } from './converters/ebook.js';
+import { splitPDF, mergePDF, watermarkPDF } from './converters/pdf.js';
 import { formatJSON } from './converters/format.js';
 import { parseGitHubUrl, isGitHubUrl, checkRateLimit, downloadGitHubFile, downloadGitHubFolder, downloadGitHubFolderFlat, parseReleaseUrl, isReleaseUrl, fetchReleases, downloadReleaseAsset, getDefaultBranch } from './converters/github.js';
 import { parseGiteeUrl, isGiteeUrl, downloadGiteeFile, downloadGiteeFolder, downloadGiteeFolderFlat, getGiteeDefaultBranch } from './converters/gitee.js';
@@ -23,6 +24,10 @@ let app = null;
 let currentView = 'home';
 let lockedView = null; // Treebox 子工具模式：锁定到初始分支，不允许跳回 FormatHub 首页或其它分支
 let githubAbortController = null;
+let pdfTool = 'split'; // 'split' | 'merge' | 'watermark'
+let pdfToolFiles = [];
+let pdfOpts = { range: '', watermarkText: '', fontSize: 36, opacity: 0.3, position: 'center', rotation: -30 };
+let pdfResult = null; // { blob, name, info }
 let githubPlatform = 'github'; // 'github' | 'gitee'
 let releaseAssets = [];
 
@@ -160,8 +165,173 @@ function renderHome() {
   app.innerHTML = '<div class="view-enter" style="padding:32px 16px;text-align:center;color:var(--text-secondary);font-size:13px;line-height:1.6">请从 Treebox 里选择一个具体工具</div>';
 }
 
+
+/* ============================================================
+   PDF 工具箱专用页面（拆分 / 合并 / 水印）
+   密码保护不在这里提供：pdf-lib 在浏览器里无法真正加密，
+   现有 encryptPDF 保存出来的文件其实没有 /Encrypt，是假保护，宁可不做。
+   ============================================================ */
+function renderPdfToolboxPage(cat) {
+  const isEn = getLang() === 'en';
+  const title = isEn ? cat.titleEn : cat.title;
+  const tools = [
+    { id: 'split', label: t('pdfSplit'), icon: '✂️' },
+    { id: 'merge', label: t('pdfMerge'), icon: '🧩' },
+    { id: 'watermark', label: t('pdfWatermark'), icon: '💧' },
+  ];
+  const toolBtns = tools.map(tool =>
+    '<button onclick="window.setPdfTool(\'' + tool.id + '\')" class="flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all ' +
+    (pdfTool === tool.id ? 'bg-red-500/10 border-red-500/40 text-red-400' : 'bg-slate-800/30 border-slate-700/40 text-slate-300') + '">' +
+    tool.icon + ' ' + tool.label + '</button>'
+  ).join('');
+
+  let optionsHtml = '';
+  if (pdfTool === 'split') {
+    optionsHtml = '<div class="space-y-2">' +
+      '<label class="text-xs text-slate-400 block">' + t('pageRange') + '</label>' +
+      '<input type="text" value="' + pdfOpts.range.replace(/"/g, '&quot;') + '" oninput="window.updatePdfOpt(\'range\', this.value)" placeholder="1-5, 8, 10-12" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">' +
+      '<p class="text-[10px] text-slate-500">' + t('pageRangeHint') + '</p></div>';
+  } else if (pdfTool === 'merge') {
+    optionsHtml = '<p class="text-xs text-slate-400">' + t('mergeOrder') + ' · ' + t('needTwoFiles') + '</p>';
+  } else if (pdfTool === 'watermark') {
+    const positions = ['top-left','top-center','top-right','center-left','center','center-right','bottom-left','bottom-center','bottom-right'];
+    const posOpts = positions.map(pos => '<option value="' + pos + '"' + (pdfOpts.position === pos ? ' selected' : '') + '>' + pos + '</option>').join('');
+    optionsHtml = '<div class="space-y-3">' +
+      '<div><label class="text-xs text-slate-400 block mb-1">' + t('watermarkText') + '</label>' +
+      '<input type="text" value="' + pdfOpts.watermarkText.replace(/"/g, '&quot;') + '" oninput="window.updatePdfOpt(\'watermarkText\', this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none"></div>' +
+      '<div class="grid grid-cols-2 gap-2">' +
+        '<div><label class="text-[10px] text-slate-500 block mb-1">' + t('fontSize') + '</label><input type="number" value="' + pdfOpts.fontSize + '" oninput="window.updatePdfOpt(\'fontSize\', this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-200"></div>' +
+        '<div><label class="text-[10px] text-slate-500 block mb-1">' + t('opacity') + ' (0.1-0.9)</label><input type="number" step="0.1" min="0.1" max="0.9" value="' + pdfOpts.opacity + '" oninput="window.updatePdfOpt(\'opacity\', this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-200"></div>' +
+        '<div><label class="text-[10px] text-slate-500 block mb-1">' + t('position') + '</label><select onchange="window.updatePdfOpt(\'position\', this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-200">' + posOpts + '</select></div>' +
+        '<div><label class="text-[10px] text-slate-500 block mb-1">' + t('rotation') + '</label><input type="number" value="' + pdfOpts.rotation + '" oninput="window.updatePdfOpt(\'rotation\', this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-200"></div>' +
+      '</div>' +
+      '<p class="text-[10px] text-slate-500">' + t('watermarkHint') + '</p></div>';
+  }
+
+  const actionLabel = pdfTool === 'split' ? t('split') : (pdfTool === 'merge' ? t('merge') : t('applyWatermark'));
+
+  app.innerHTML = '<div class="min-h-screen bg-slate-950 view-enter">' +
+    '<header class="border-b border-slate-800 glass sticky top-0 z-50">' +
+      '<div class="max-w-6xl mx-auto px-4 py-3.5 flex items-center gap-3">' +
+        '<div class="flex items-center gap-2.5"><span class="text-2xl">' + cat.emoji + '</span>' +
+          '<div><h1 class="text-base font-bold leading-none">' + title + '</h1><p class="text-[10px] text-slate-400 mt-0.5">' + (isEn ? cat.descEn : cat.desc) + '</p></div></div>' +
+        '<div class="ml-auto flex items-center gap-1">' +
+          '<button onclick="window.switchLang(\'zh\')" class="lang-btn ' + (getLang() === 'zh' ? 'active' : '') + '">中文</button>' +
+          '<button onclick="window.switchLang(\'en\')" class="lang-btn ' + (getLang() === 'en' ? 'active' : '') + '">EN</button>' +
+        '</div>' +
+      '</div>' +
+    '</header>' +
+    '<main class="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6 w-full">' +
+      '<div class="rounded-2xl bg-slate-800/20 border border-slate-700/30 p-4 space-y-3">' +
+        '<h3 class="text-sm font-semibold text-slate-300">' + t('pdfToolSelect') + '</h3>' +
+        '<div class="flex gap-2">' + toolBtns + '</div>' +
+      '</div>' +
+      '<div id="pdfDropZone" class="group relative border-2 border-dashed border-slate-600 rounded-2xl bg-slate-800/20 p-8 text-center cursor-pointer">' +
+        '<input type="file" id="pdfFileInput" multiple accept=".pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">' +
+        '<div class="relative z-0 pointer-events-none"><h3 class="text-base font-semibold mb-1">' + t('clickOrDrag') + '</h3>' +
+        '<p class="text-slate-400 text-xs">PDF · ' + t('maxSize') + '</p></div>' +
+      '</div>' +
+      '<div id="libLoader" class="hidden rounded-xl bg-slate-800/40 border border-slate-700/40 p-3 text-center"><span class="text-xs text-slate-400">' + t('loadingLibs') + '</span></div>' +
+      '<div id="pdfFileList" class="space-y-2"></div>' +
+      '<div class="rounded-2xl bg-slate-800/20 border border-slate-700/30 p-4">' + optionsHtml + '</div>' +
+      '<button onclick="window.runPdfTool()" class="w-full py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl text-sm active:scale-[0.98] transition-all">' + actionLabel + '</button>' +
+      '<div id="pdfResultArea"></div>' +
+    '</main></div>';
+
+  const input = document.getElementById('pdfFileInput');
+  if (input) {
+    input.addEventListener('change', (e) => {
+      const added = Array.from(e.target.files || []).filter(f => /\.pdf$/i.test(f.name));
+      for (const f of added) {
+        if (f.size > MAX_SIZE) { toast('⚠️', '「' + f.name + '」' + t('maxSize')); continue; }
+        pdfToolFiles.push(f);
+      }
+      pdfResult = null;
+      renderPdfFileList();
+      renderPdfResultArea();
+      e.target.value = '';
+    });
+  }
+  renderPdfFileList();
+  renderPdfResultArea();
+}
+
+function renderPdfFileList() {
+  const el = document.getElementById('pdfFileList');
+  if (!el) return;
+  if (!pdfToolFiles.length) { el.innerHTML = ''; return; }
+  el.innerHTML = pdfToolFiles.map((f, idx) =>
+    '<div class="flex items-center gap-2 p-3 rounded-xl bg-slate-800/30 border border-slate-700/30">' +
+      '<span class="text-xs text-slate-400 w-6">' + (idx + 1) + '.</span>' +
+      '<span class="flex-1 text-xs text-slate-200 truncate">' + f.name + '</span>' +
+      '<span class="text-[10px] text-slate-500">' + fmtSize(f.size) + '</span>' +
+      (pdfTool === 'merge' ? '<button onclick="window.movePdfFile(' + idx + ',-1)" class="text-xs px-2 py-1 rounded bg-slate-700 text-slate-300">↑</button><button onclick="window.movePdfFile(' + idx + ',1)" class="text-xs px-2 py-1 rounded bg-slate-700 text-slate-300">↓</button>' : '') +
+      '<button onclick="window.removePdfFile(' + idx + ')" class="text-xs px-2 py-1 rounded bg-slate-700 text-slate-300">' + t('remove') + '</button>' +
+    '</div>'
+  ).join('');
+}
+
+function renderPdfResultArea() {
+  const el = document.getElementById('pdfResultArea');
+  if (!el) return;
+  if (!pdfResult) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="rounded-2xl bg-slate-800/20 border border-slate-700/30 p-4 space-y-2">' +
+    '<h3 class="text-sm font-semibold text-slate-300">' + t('result') + '</h3>' +
+    '<p class="text-xs text-slate-400">' + pdfResult.name + ' · ' + fmtSize(pdfResult.blob.size) + (pdfResult.info ? ' · ' + pdfResult.info : '') + '</p>' +
+    '<button onclick="window.downloadPdfResult()" class="w-full py-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium">' + t('download') + '</button></div>';
+}
+
+window.setPdfTool = function(tool) { pdfTool = tool; pdfResult = null; render(); };
+window.updatePdfOpt = function(key, value) { pdfOpts[key] = value; };
+window.removePdfFile = function(idx) { pdfToolFiles.splice(idx, 1); pdfResult = null; renderPdfFileList(); renderPdfResultArea(); };
+window.movePdfFile = function(idx, dir) {
+  const next = idx + dir;
+  if (next < 0 || next >= pdfToolFiles.length) return;
+  const tmp = pdfToolFiles[idx]; pdfToolFiles[idx] = pdfToolFiles[next]; pdfToolFiles[next] = tmp;
+  renderPdfFileList();
+};
+window.downloadPdfResult = function() { if (pdfResult) dlBlob(pdfResult.blob, pdfResult.name); };
+
+window.runPdfTool = async function() {
+  try {
+    await ensureLibsReady('pdf');
+    if (!window.PDFLib) throw new Error(t('loadingLibs'));
+    if (pdfTool === 'split') {
+      if (!pdfToolFiles.length) throw new Error(t('noFiles'));
+      if (!pdfOpts.range.trim()) throw new Error(t('enterPageRange'));
+      const file = pdfToolFiles[0];
+      const blob = await splitPDF(file, pdfOpts.range.trim());
+      pdfResult = { blob, name: file.name.replace(/\.[^.]+$/, '') + '_split.pdf', info: '' };
+    } else if (pdfTool === 'merge') {
+      if (pdfToolFiles.length < 2) throw new Error(t('needTwoFiles'));
+      const order = pdfToolFiles.map((_, i) => i);
+      const { blob, totalPages } = await mergePDF(pdfToolFiles, order);
+      pdfResult = { blob, name: 'merged.pdf', info: totalPages + ' ' + t('pageCount') };
+      if (totalPages > 500) toast('⚠️', t('mergeWarning'));
+    } else if (pdfTool === 'watermark') {
+      if (!pdfToolFiles.length) throw new Error(t('noFiles'));
+      if (!pdfOpts.watermarkText.trim()) throw new Error(t('enterWatermarkText'));
+      const file = pdfToolFiles[0];
+      const blob = await watermarkPDF(file, {
+        text: pdfOpts.watermarkText.trim(),
+        fontSize: parseInt(pdfOpts.fontSize, 10) || 36,
+        opacity: Math.min(0.9, Math.max(0.1, parseFloat(pdfOpts.opacity) || 0.3)),
+        position: pdfOpts.position,
+        rotation: parseInt(pdfOpts.rotation, 10) || 0,
+      });
+      pdfResult = { blob, name: file.name.replace(/\.[^.]+$/, '') + '_watermark.pdf', info: '' };
+    }
+    renderPdfResultArea();
+    toast('✅', t('done'));
+  } catch (err) {
+    toast('❌', err.message || t('failed'));
+  }
+};
+
+
 async function renderCategoryPage(catId) {
   const cat = CATEGORIES[catId];
+  if (catId === 'pdf') { renderPdfToolboxPage(cat); return; }
   const isEn = getLang() === 'en';
   const title = isEn ? cat.titleEn : cat.title;
   const desc = isEn ? cat.descEn : cat.desc;
