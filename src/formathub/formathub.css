@@ -87,28 +87,20 @@
   border-color: var(--border);
 }
 
-/* Fixed title bar for each FormatHub branch tool
-   Treebox scrolls inside .app-content (padding:16px), so offset -16px
-   makes the bar sit flush under the main AppHeader.
-   Header must be opaque, not glass/transparent — otherwise content
-   scrolling underneath shows through and looks like it is moving / blocking.
+/* FormatHub branch header — no floating / no sticky
+   Jin found the floating sticky bar uncomfortable (it covers content while scrolling).
+   Treebox already has its own fixed AppHeader on top, so this inner bar
+   should just scroll away naturally like normal page content.
 */
 .formathub-root header,
 .formathub-root header.glass {
-  position: -webkit-sticky;
-  position: sticky;
-  top: -16px;
-  z-index: 50;
+  position: static !important;
+  top: auto !important;
+  z-index: auto;
   background: var(--bg) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   border-bottom: 1px solid var(--border);
-}
-@media (max-width: 640px) {
-  .formathub-root header,
-  .formathub-root header.glass {
-    top: -16px;
-  }
 }
 
 /* Drop zone */
