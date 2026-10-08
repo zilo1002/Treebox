@@ -139,28 +139,3 @@ export async function watermarkPDF(file, opts) {
   const bytes = await pdfDoc.save();
   return new Blob([bytes], { type: 'application/pdf' });
 }
-
-/**
- * PDF 加密
- */
-export async function encryptPDF(file, password) {
-  const { PDFDocument } = window.PDFLib;
-  const ab = await readAB(file);
-  const pdfDoc = await PDFDocument.load(ab);
-  const bytes = await pdfDoc.save({
-    encrypt: {
-      userPassword: password,
-      ownerPassword: password,
-      permissions: {
-        printing: 'highResolution',
-        modifying: false,
-        copying: false,
-        annotating: false,
-        fillingForms: false,
-        contentAccessibility: false,
-        documentAssembly: false,
-      }
-    }
-  });
-  return new Blob([bytes], { type: 'application/pdf' });
-}
