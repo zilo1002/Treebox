@@ -1419,6 +1419,7 @@ window.dlExtract = function(idx) {
 
 function toast(icon, msg) {
   const tEl = document.getElementById('toast'), ti = document.getElementById('toastIcon'), tm = document.getElementById('toastMsg');
+  if (!tEl || !ti || !tm) return;
   ti.textContent = icon; tm.textContent = msg;
   tEl.classList.remove('translate-y-24', 'opacity-0');
   setTimeout(() => tEl.classList.add('translate-y-24', 'opacity-0'), 2800);
@@ -1719,6 +1720,11 @@ function renderGitHubPage() {
         '<p class="text-[10px] text-slate-500">'+t('footer')+'</p>'+
       '</div>'+
     '</footer>'+
+  '</div>'+
+  '<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">'+
+    '<div class="px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-600 shadow-2xl flex items-center gap-2.5 whitespace-nowrap">'+
+      '<span id="toastIcon" class="text-base"></span><span id="toastMsg" class="text-sm font-medium"></span>'+
+    '</div>'+
   '</div>';
 
   checkRateLimit().then(r => {
@@ -1785,6 +1791,10 @@ window.startGitHubDownload = async function() {
     if (!info) { toast('⚠️', t('invalidGiteeUrl')); return; }
   }
 
+  // 先创建控制器：取默认分支和后续下载共用同一个。之前取默认分支时它还是 null，读 .signal 会直接报错。
+  if (githubAbortController) githubAbortController.abort();
+  githubAbortController = new AbortController();
+
   // 如果没有指定分支，获取默认分支
   if (!info.branch) {
     text.textContent = '正在获取默认分支...';
@@ -1798,6 +1808,7 @@ window.startGitHubDownload = async function() {
       btn.disabled = false;
       btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> '+t('download');
       if (progress) progress.classList.add('hidden');
+      githubAbortController = null;
       return;
     }
   }
@@ -1816,9 +1827,6 @@ window.startGitHubDownload = async function() {
       }
     }
   }
-
-  if (githubAbortController) githubAbortController.abort();
-  githubAbortController = new AbortController();
 
   btn.disabled = true;
   btn.innerHTML = '<svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> '+t('downloading');

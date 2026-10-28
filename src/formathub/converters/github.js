@@ -30,7 +30,10 @@ export function isGitHubUrl(url) {
 /* 获取默认分支 */
 export async function getDefaultBranch(owner, repo, signal) {
   const resp = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { signal });
-  if (!resp.ok) throw new Error(`获取仓库信息失败 HTTP ${resp.status}`);
+  if (!resp.ok) {
+    if (resp.status === 404) throw new Error('仓库不存在或为私有仓库，未登录无法访问 (HTTP 404)');
+    throw new Error(`获取仓库信息失败 HTTP ${resp.status}`);
+  }
   const data = await resp.json();
   return data.default_branch;
 }
@@ -65,7 +68,10 @@ export async function downloadGitHubFile(info, signal) {
   }
   const raw = buildRawUrl(info.owner, info.repo, info.branch, info.path);
   const resp = await fetch(raw, { signal });
-  if (!resp.ok) throw new Error(`下载失败 HTTP ${resp.status}`);
+  if (!resp.ok) {
+    if (resp.status === 404) throw new Error('文件不存在或所在仓库为私有仓库，未登录无法访问 (HTTP 404)');
+    throw new Error(`下载失败 HTTP ${resp.status}`);
+  }
   const blob = await resp.blob();
   const filename = info.path.split('/').pop();
   return { blob, filename };
@@ -77,6 +83,7 @@ async function fetchTreeFiles(owner, repo, branch, targetPath, signal) {
   const resp = await fetch(api, { signal });
 
   if (!resp.ok) {
+    if (resp.status === 404) throw new Error('仓库不存在或为私有仓库，未登录无法访问 (HTTP 404)');
     const err = await resp.json().catch(() => ({}));
     throw new Error(err.message || `GitHub API ${resp.status}`);
   }
