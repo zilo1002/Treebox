@@ -25,6 +25,17 @@
 
     <!-- Editor -->
     <div v-else class="editor">
+      <details class="usage-help">
+        <summary>使用说明</summary>
+        <ul>
+          <li>上传：可多选文件；.zip 会展开成里面的文件和文件夹；点“上传文件夹”或把文件夹拖进来，文件夹本身也可以改名。</li>
+          <li>规则：前缀、后缀、序号、查找替换对所有名字生效，序号按列表顺序编；改完点“应用规则”。</li>
+          <li>文件夹改名：改文件夹那一行的新名，里面的文件和子文件夹跟着换路径；应用规则时也一样。</li>
+          <li>下载：点“下载全部”，普通文件单个下载；每个 .zip / 文件夹打回一个包，包里是改名后的路径，文件夹的包名自动加 .zip。</li>
+          <li>批处理脚本：只对本地真实文件生成，zip / 文件夹里面的条目不参与。</li>
+          <li>手机上选不了文件夹时，先把文件夹打成 zip 再上传（部分浏览器不支持直接选文件夹）。</li>
+        </ul>
+      </details>
       <!-- Rules -->
       <div class="rules-panel">
         <div class="rule-row">
@@ -563,6 +574,23 @@ function copyScript() {
 .editor { display: flex; flex-direction: column; gap: 16px; }
 
 /* Rules */
+.usage-help {
+  background: var(--bg-raised);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  font-size: 0.8125rem;
+}
+.usage-help summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.usage-help ul {
+  margin: 8px 0 2px;
+  padding-left: 18px;
+  line-height: 1.8;
+}
 .rules-panel {
   background: var(--bg-raised);
   border-radius: 12px;
