@@ -97,6 +97,10 @@ export default {
     percent: '%',
     dot: '.',
     equal: '=',
+    historyEmpty: 'No history',
+    historyClear: 'Clear history',
+    historyClearConfirm: 'Clear all history?',
+    historyCancel: 'Cancel',
   },
 
   rate: {

@@ -25,6 +25,12 @@
         <!-- 显示区 -->
         <div class="calc-display-area">
           <div class="calc-history-row">
+            <button class="calc-history-btn" @click="showCalcHistory = !showCalcHistory">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </button>
             <button class="calc-mode-toggle" @click="calcScientific = !calcScientific">
               <span v-if="calcScientific">🔄</span>
               <span v-else>📐</span>
@@ -34,8 +40,23 @@
           <div class="calc-preview">{{ calcPreview }}</div>
         </div>
 
+        <!-- 历史记录（替换键盘区） -->
+        <div v-if="showCalcHistory" class="calc-history-panel">
+          <div v-if="!groupedCalcHistory.length" class="calc-history-empty">{{ $t('calc.historyEmpty') }}</div>
+          <div v-else class="calc-history-list">
+            <div v-for="g in groupedCalcHistory" :key="g.date">
+              <div class="calc-history-date">{{ g.date }}</div>
+              <button v-for="h in g.items" :key="h.id" class="calc-history-item" @click="restoreCalcHistory(h)">
+                <span class="calc-history-expr">{{ h.expr }} =</span>
+                <span class="calc-history-result">{{ h.result }}</span>
+              </button>
+            </div>
+          </div>
+          <button v-if="calcHistory.length" class="calc-history-clear" @click="confirmClearCalcHistory = true">{{ $t('calc.historyClear') }}</button>
+        </div>
+
         <!-- 键盘 -->
-        <div class="calc-keyboard" :class="{ scientific: calcScientific }">
+        <div v-else class="calc-keyboard" :class="{ scientific: calcScientific }">
           <!-- 科学键区 -->
           <div v-if="calcScientific" class="calc-sci-keys">
             <button class="calc-key sci" @click="calcSci('2nd')">2<sup>nd</sup></button>
@@ -97,6 +118,17 @@
             <button class="calc-key" @click="calcNum('0')">0</button>
             <button class="calc-key" @click="calcDot">{{ $t('calc.dot') }}</button>
             <button class="calc-key eq" @click="calcEqual">{{ $t('calc.equal') }}</button>
+          </div>
+        </div>
+
+        <!-- 清除历史确认 -->
+        <div v-if="confirmClearCalcHistory" class="calc-confirm-overlay" @click.self="confirmClearCalcHistory = false">
+          <div class="calc-confirm-box">
+            <p>{{ $t('calc.historyClearConfirm') }}</p>
+            <div class="calc-confirm-actions">
+              <button class="calc-confirm-cancel" @click="confirmClearCalcHistory = false">{{ $t('calc.historyCancel') }}</button>
+              <button class="calc-confirm-danger" @click="clearCalcHistory">{{ $t('calc.historyClear') }}</button>
+            </div>
           </div>
         </div>
       </section>
@@ -294,6 +326,76 @@ let calcOperator = ''
 let calcReset = false
 let calcMemory = 0
 
+/* 计算器历史记录：每次 = 的算式 + 结果，按日期分组，存本地 */
+const CALC_HISTORY_KEY = 'treebox-calc-history'
+const CALC_HISTORY_LIMIT = 100
+const showCalcHistory = ref(false)
+const confirmClearCalcHistory = ref(false)
+const calcHistory = ref([])
+
+function loadCalcHistory() {
+  try {
+    const raw = localStorage.getItem(CALC_HISTORY_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) calcHistory.value = parsed
+    }
+  } catch { calcHistory.value = [] }
+}
+
+function saveCalcHistory() {
+  try {
+    localStorage.setItem(CALC_HISTORY_KEY, JSON.stringify(calcHistory.value))
+  } catch { /* 存储被禁时只保留内存里的记录 */ }
+}
+
+loadCalcHistory()
+
+function calcHistoryDate(ts) {
+  const d = new Date(ts)
+  const p = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`
+}
+
+const groupedCalcHistory = computed(() => {
+  const groups = []
+  const map = new Map()
+  for (const h of calcHistory.value) {
+    const d = calcHistoryDate(h.time)
+    if (!map.has(d)) {
+      const g = { date: d, items: [] }
+      map.set(d, g)
+      groups.push(g)
+    }
+    map.get(d).items.push(h)
+  }
+  return groups
+})
+
+function recordCalcHistory(exprStr, result) {
+  calcHistory.value.unshift({
+    id: Date.now() + Math.random().toString(36).slice(2, 7),
+    expr: exprStr,
+    result: String(result),
+    time: Date.now(),
+  })
+  if (calcHistory.value.length > CALC_HISTORY_LIMIT) calcHistory.value.length = CALC_HISTORY_LIMIT
+  saveCalcHistory()
+}
+
+function restoreCalcHistory(h) {
+  calcExpression.value = h.expr
+  calcPreview.value = h.result
+  calcReset = true
+  showCalcHistory.value = false
+}
+
+function clearCalcHistory() {
+  calcHistory.value = []
+  saveCalcHistory()
+  confirmClearCalcHistory.value = false
+}
+
 function calcNum(n) {
   if (calcReset) { calcExpression.value = ''; calcReset = false }
   if (calcExpression.value === '0' && n !== '.') calcExpression.value = ''
@@ -334,13 +436,16 @@ function calcOp(op) {
 function calcEqual() {
   if (!calcExpression.value) return
   try {
-    const expr = calcExpression.value
+    const rawExpr = calcExpression.value
+    const expr = rawExpr
       .replace(/×/g, '*')
       .replace(/÷/g, '/')
       .replace(/−/g, '-')
     // eslint-disable-next-line no-eval
     const result = eval(expr)
-    calcPreview.value = String(Number(result.toFixed(8)))
+    const resultStr = String(Number(result.toFixed(8)))
+    calcPreview.value = resultStr
+    if (Number.isFinite(result)) recordCalcHistory(rawExpr, resultStr)
     calcExpression.value = calcPreview.value
     calcReset = true
   } catch {
@@ -421,6 +526,10 @@ function calcUpdatePreview() {
 
 function onKey(e) {
   if (activeTab.value !== 'calc') return
+  if (showCalcHistory.value) {
+    if (e.key === 'Escape') showCalcHistory.value = false
+    return
+  }
   const k = e.key
   if (/[0-9]/.test(k)) calcNum(k)
   else if (k === '.') calcDot()
@@ -879,6 +988,137 @@ function syncColor(source) {
   margin-top: 8px;
   text-align: right;
   min-height: 32px;
+}
+
+/* 历史记录按钮：手机上也显示（不跟 📐 按钮一起隐藏） */
+.calc-history-btn {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  color: #666;
+  cursor: pointer;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.calc-history-btn:active { background: #f0f0f0; }
+
+/* 历史记录面板：替换键盘区 */
+.calc-history-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 12px 16px;
+  min-height: 0;
+  max-width: 400px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+.calc-history-list {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+.calc-history-empty {
+  text-align: center;
+  color: #bbb;
+  font-size: 0.875rem;
+  padding: 32px 0;
+}
+.calc-history-date {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #e74c3c;
+  padding: 8px 0 4px;
+}
+.calc-history-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 4px;
+  font-size: 1rem;
+  font-family: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #f0f0f0;
+  color: #333;
+  cursor: pointer;
+}
+.calc-history-item:active { background: #f7f7f7; }
+.calc-history-expr {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #666;
+}
+.calc-history-result {
+  font-weight: 500;
+  white-space: nowrap;
+}
+.calc-history-clear {
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  cursor: pointer;
+  background: #f0f0f0;
+  color: #333;
+  border: none;
+}
+.calc-history-clear:active { background: #e0e0e0; }
+
+/* 清除历史确认 */
+.calc-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 24px;
+  box-sizing: border-box;
+}
+.calc-confirm-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  width: 100%;
+  max-width: 300px;
+  box-sizing: border-box;
+  text-align: center;
+  color: #333;
+}
+.calc-confirm-box p { margin: 0 0 16px; font-size: 0.9375rem; }
+.calc-confirm-actions { display: flex; gap: 10px; }
+.calc-confirm-actions button { flex: 1; }
+.calc-confirm-cancel {
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  cursor: pointer;
+  background: #f0f0f0;
+  color: #333;
+  border: none;
+}
+.calc-confirm-danger {
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: #e74c3c;
+  color: #fff;
 }
 
 /* 键盘 */

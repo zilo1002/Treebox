@@ -107,6 +107,10 @@ export default {
     percent: '%',
     dot: '.',
     equal: '=',
+    historyEmpty: '无历史记录',
+    historyClear: '清除记录',
+    historyClearConfirm: '确定清除全部历史记录吗？',
+    historyCancel: '取消',
   },
 
   // 汇率
