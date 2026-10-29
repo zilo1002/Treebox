@@ -2,7 +2,7 @@
    GitHub 链接解析与下载
    ============================================================ */
 
-import { getRawMirror, RAW_MIRRORS, getDownloadProgress, saveDownloadProgress, clearDownloadProgress } from '../utils.js';
+import { getRawMirror, RAW_MIRRORS } from '../utils.js';
 
 // 支持：
 //   github.com/owner/repo
@@ -110,30 +110,15 @@ async function fetchTreeFiles(owner, repo, branch, targetPath, signal) {
   return files;
 }
 
-/* 下载文件夹并打包为 ZIP（支持断点续传） */
+/* 下载文件夹并打包为 ZIP */
 export async function downloadGitHubFolder(info, onProgress, signal) {
   if (!info.branch) {
     info.branch = await getDefaultBranch(info.owner, info.repo, signal);
   }
 
-  const downloadId = `${info.owner}/${info.repo}/${info.branch}/${info.path || '__root__'}`;
-  const progress = await getDownloadProgress(downloadId);
-
-  let files = await fetchTreeFiles(info.owner, info.repo, info.branch, info.path, signal);
-  let skipped = 0;
-
-  if (progress && progress.files && progress.files.length > 0) {
-    const doneSet = new Set(progress.files);
-    files = files.filter(f => !doneSet.has(f.path));
-    skipped = progress.files.length;
-    if (onProgress) onProgress(skipped, skipped + files.length, 'resume');
-  }
+  const files = await fetchTreeFiles(info.owner, info.repo, info.branch, info.path, signal);
 
   if (files.length === 0) {
-    if (skipped > 0) {
-      await clearDownloadProgress(downloadId);
-      throw new Error('所有文件已下载完成');
-    }
     throw new Error('文件夹为空');
   }
 
@@ -148,11 +133,7 @@ export async function downloadGitHubFolder(info, onProgress, signal) {
 
   const zip = new window.JSZip();
   const folderName = info.path ? info.path.split('/').pop() : info.repo;
-  let done = skipped;
-  // 进度记录必须累计：progress 是循环开始前读的旧快照，每次都拿它 + 当前文件
-  // 去保存，会丢掉本轮前面已下载的文件，中断后续传时又要重下。改用本轮内
-  // 持续追加的 doneFiles。
-  const doneFiles = [...(progress?.files || [])];
+  let done = 0;
 
   for (const f of files) {
     if (signal?.aborted) throw new Error('已取消');
@@ -163,21 +144,14 @@ export async function downloadGitHubFolder(info, onProgress, signal) {
       const blob = await r.blob();
       zip.file(f.name, blob);
       done++;
-      if (!doneFiles.includes(f.path)) doneFiles.push(f.path);
-      await saveDownloadProgress(downloadId, {
-        owner: info.owner, repo: info.repo, branch: info.branch, path: info.path,
-        files: doneFiles
-      });
-      if (onProgress) onProgress(done, skipped + files.length, f.name);
+      if (onProgress) onProgress(done, files.length, f.name);
     } catch (e) {
       console.warn('skip', f.path, e.message);
     }
   }
 
-  await clearDownloadProgress(downloadId);
-
   const blob = await zip.generateAsync({ type: 'blob' });
-  return { blob, filename: `${folderName}.zip`, done, total: skipped + files.length };
+  return { blob, filename: `${folderName}.zip`, done, total: files.length };
 }
 
 /* 纯文件下载（扁平化）—— 按顺序串行下载，无文件夹层级 */
@@ -186,24 +160,9 @@ export async function downloadGitHubFolderFlat(info, keepPath, onProgress, signa
     info.branch = await getDefaultBranch(info.owner, info.repo, signal);
   }
 
-  const downloadId = `${info.owner}/${info.repo}/${info.branch}/${info.path || '__root__'}_flat`;
-  const progress = await getDownloadProgress(downloadId);
-
-  let files = await fetchTreeFiles(info.owner, info.repo, info.branch, info.path, signal);
-  let skipped = 0;
-
-  if (progress && progress.files && progress.files.length > 0) {
-    const doneSet = new Set(progress.files);
-    files = files.filter(f => !doneSet.has(f.path));
-    skipped = progress.files.length;
-    if (onProgress) onProgress(skipped, skipped + files.length, 'resume');
-  }
+  const files = await fetchTreeFiles(info.owner, info.repo, info.branch, info.path, signal);
 
   if (files.length === 0) {
-    if (skipped > 0) {
-      await clearDownloadProgress(downloadId);
-      throw new Error('所有文件已下载完成');
-    }
     throw new Error('文件夹为空');
   }
 
@@ -219,9 +178,7 @@ export async function downloadGitHubFolderFlat(info, keepPath, onProgress, signa
   const zip = new window.JSZip();
   const folderName = info.path ? info.path.split('/').pop() : info.repo;
   const usedNames = new Set();
-  let done = skipped;
-  // 同上：进度记录必须累计，不能每次都拿循环前的旧快照 + 当前文件去保存。
-  const doneFiles = [...(progress?.files || [])];
+  let done = 0;
 
   for (const f of files) {
     if (signal?.aborted) throw new Error('已取消');
@@ -250,21 +207,14 @@ export async function downloadGitHubFolderFlat(info, keepPath, onProgress, signa
 
       zip.file(flatName, blob);
       done++;
-      if (!doneFiles.includes(f.path)) doneFiles.push(f.path);
-      await saveDownloadProgress(downloadId, {
-        owner: info.owner, repo: info.repo, branch: info.branch, path: info.path,
-        files: doneFiles
-      });
-      if (onProgress) onProgress(done, skipped + files.length, f.name);
+      if (onProgress) onProgress(done, files.length, f.name);
     } catch (e) {
       console.warn('skip', f.path, e.message);
     }
   }
 
-  await clearDownloadProgress(downloadId);
-
   const blob = await zip.generateAsync({ type: 'blob' });
-  return { blob, filename: `${folderName}_flat.zip`, done, total: skipped + files.length };
+  return { blob, filename: `${folderName}_flat.zip`, done, total: files.length };
 }
 
 /* ============================================================

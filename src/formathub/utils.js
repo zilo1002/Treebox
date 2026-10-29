@@ -28,66 +28,6 @@ export function setRawMirror(key) {
   safeStorageSet('formathub-raw-mirror', key);
 }
 
-/* ============================================================
-   下载断点续传 IndexedDB
-   ============================================================ */
-const DB_NAME = 'FormatHubDB';
-const DB_VERSION = 1;
-const STORE_NAME = 'downloads';
-
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onerror = () => reject(req.error);
-    req.onsuccess = () => resolve(req.result);
-    req.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-      }
-    };
-  });
-}
-
-export async function getDownloadProgress(id) {
-  try {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readonly');
-      const store = tx.objectStore(STORE_NAME);
-      const req = store.get(id);
-      req.onsuccess = () => resolve(req.result || null);
-      req.onerror = () => reject(req.error);
-    });
-  } catch { return null; }
-}
-
-export async function saveDownloadProgress(id, data) {
-  try {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      const req = store.put({ id, ...data, timestamp: Date.now() });
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-    });
-  } catch { /* ignore */ }
-}
-
-export async function clearDownloadProgress(id) {
-  try {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      const req = store.delete(id);
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-    });
-  } catch { /* ignore */ }
-}
-
 export const I18N = {
   zh: {
     appName: 'FormatHub',
@@ -181,8 +121,6 @@ export const I18N = {
     mirrorGHProxy: 'GHProxy',
     mirrorMirrorGH: 'Mirror.gh',
     mirrorFastGit: 'FastGit',
-    resumeDownload: '继续下载',
-    resumeFound: '发现未完成的下载，已下载 {done} 个文件，是否继续？',
     releaseDownload: 'Release 下载',
     releaseUrlLabel: '仓库地址',
     releaseUrlHint: '如：github.com/owner/repo',
@@ -342,8 +280,6 @@ export const I18N = {
     mirrorGHProxy: 'GHProxy',
     mirrorMirrorGH: 'Mirror.gh',
     mirrorFastGit: 'FastGit',
-    resumeDownload: 'Resume Download',
-    resumeFound: 'Found unfinished download: {done} file(s) downloaded. Resume?',
     releaseDownload: 'Release Download',
     releaseUrlLabel: 'Repository URL',
     releaseUrlHint: 'e.g. github.com/owner/repo',

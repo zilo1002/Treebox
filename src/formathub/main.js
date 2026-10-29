@@ -12,7 +12,7 @@ import { splitPDF, mergePDF, watermarkPDF, encryptPDF, decryptPDF } from './conv
 import { formatJSON } from './converters/format.js';
 import { parseGitHubUrl, isGitHubUrl, checkRateLimit, downloadGitHubFile, downloadGitHubFolder, downloadGitHubFolderFlat, parseReleaseUrl, isReleaseUrl, fetchReleases, downloadReleaseAsset, getDefaultBranch } from './converters/github.js';
 import { parseGiteeUrl, isGiteeUrl, downloadGiteeFile, downloadGiteeFolder, downloadGiteeFolderFlat, getGiteeDefaultBranch } from './converters/gitee.js';
-import { RAW_MIRRORS, getRawMirror, setRawMirror, getDownloadProgress, clearDownloadProgress } from './utils.js';
+import { RAW_MIRRORS, getRawMirror, setRawMirror } from './utils.js';
 
 let currentCat = null;
 let files = [];
@@ -1954,18 +1954,6 @@ window.startGitHubDownload = async function() {
 
   const mode = document.getElementById('downloadMode')?.value || 'zip';
   const keepPath = document.getElementById('flatPathMode')?.value === 'keep';
-
-  // 断点续传检查
-  if (info.type === 'tree') {
-    const downloadId = `${info.owner}/${info.repo}/${info.branch}/${info.path || '__root__'}${mode === 'flat' ? '_flat' : ''}`;
-    const prevProgress = await getDownloadProgress(downloadId);
-    if (prevProgress && prevProgress.files && prevProgress.files.length > 0) {
-      // 总数在取文件列表前是不知道的：以前写死 done+1 是错的，只报已下载数。
-      if (!confirm(t('resumeFound').replace('{done}', prevProgress.files.length))) {
-        await clearDownloadProgress(downloadId);
-      }
-    }
-  }
 
   btn.disabled = true;
   btn.innerHTML = '<svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> '+t('downloading');
