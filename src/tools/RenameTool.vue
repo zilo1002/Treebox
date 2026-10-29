@@ -141,8 +141,39 @@ function triggerFile() {
   fileInput.value?.click()
 }
 
-function triggerFolder() {
+async function triggerFolder() {
+  // 优先用系统文件夹选择器（File System Access API）：部分手机浏览器不认 webkitdirectory
+  // 选择框，却认这个。用户取消则静默返回，不再弹选择框；其他错误回退到选择框。
+  if (typeof window.showDirectoryPicker === 'function') {
+    try {
+      const handle = await window.showDirectoryPicker()
+      parsing.value = true
+      try {
+        const dropped = []
+        await collectHandle(handle, '', dropped)
+        addDroppedEntries(dropped)
+      } finally {
+        parsing.value = false
+      }
+      return
+    } catch (e) {
+      if (e && e.name === 'AbortError') return
+    }
+  }
   folderInput.value?.click()
+}
+
+// File System Access 的目录句柄递归：与拖入条目同一形状，复用 addDroppedEntries
+async function collectHandle(handle, prefix, out) {
+  const path = prefix ? prefix + '/' + handle.name : handle.name
+  if (handle.kind === 'file') {
+    out.push({ path, isDir: false, file: await handle.getFile(), zipEntry: null })
+  } else {
+    out.push({ path, isDir: true, file: null, zipEntry: null })
+    for await (const child of handle.values()) {
+      await collectHandle(child, path, out)
+    }
+  }
 }
 
 function onFileSelect(e) {
@@ -154,6 +185,10 @@ function onFolderSelect(e) {
   folderInput.value && (folderInput.value.value = '')
   if (!list.length) return
   addFolderFiles(list)
+  // 选择框回退到了选文件模式（文件全无文件夹路径）：明说，不让用户以为文件夹结构还在
+  if (!list.some(f => f.webkitRelativePath && f.webkitRelativePath.includes('/'))) {
+    alert('这台设备选不了文件夹，已按散文件加入；要保留文件夹结构，请先把文件夹打成 zip 再上传')
+  }
 }
 
 // 文件夹选择框的文件带 webkitRelativePath（如 photos/img/a.jpg），按顶层目录分组
