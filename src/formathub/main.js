@@ -1214,6 +1214,10 @@ async function startConvert(catId) {
 /* ============================================================
    Worker 任务封装
    ============================================================ */
+// Worker 任务超时：首次加载要拉 CDN 库，实测可能要一分钟以上，
+// 给足 120 秒无动静才判超时；有进展消息就续命。
+const WORKER_TIMEOUT_MS = 120000;
+
 function workerConvert(workerType, taskType, payload, taskId) {
   return new Promise((resolve, reject) => {
     const worker = workerPool.get(workerType);
@@ -1222,7 +1226,31 @@ function workerConvert(workerType, taskType, payload, taskId) {
       return;
     }
 
+    let settled = false;
+    let timer = null;
+    const evict = () => { if (workerPool[workerType] === worker) workerPool[workerType] = null; };
+    const cleanup = () => {
+      if (timer) { clearTimeout(timer); timer = null; }
+      worker.removeEventListener('message', handler);
+      worker.removeEventListener('error', onWorkerError);
+    };
+    const fail = err => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(err);
+    };
+    const onTimeout = () => {
+      // 超时：终止这个可能已死的 Worker 并踢出连接池，下次重建；
+      // 若只是慢，报错后用户重试时会建新 Worker。
+      try { worker.terminate(); } catch { /* 已终止则忽略 */ }
+      evict();
+      fail(new Error(getLang() === 'en' ? 'Conversion timed out. Please check your network and try again.' : '转换超时，请检查网络后重试'));
+    };
+    const armTimer = () => { timer = setTimeout(onTimeout, WORKER_TIMEOUT_MS); };
+
     function handler(e) {
+      if (settled) return;
       const { id, type, result, message, value } = e.data;
       if (id !== taskId) return;
 
@@ -1232,9 +1260,13 @@ function workerConvert(workerType, taskType, payload, taskId) {
           item.progress = value;
           renderFiles(currentCat);
         }
+        // 有进展就续命：超时只针对 120 秒无任何动静
+        if (timer) clearTimeout(timer);
+        armTimer();
       }
       else if (type === 'complete') {
-        worker.removeEventListener('message', handler);
+        settled = true;
+        cleanup();
         if (result.mode === 'text') {
           resolve(new Blob([result.text], { type: result.mime + ';charset=utf-8' }));
         } else if (result.mode === 'arraybuffer') {
@@ -1244,12 +1276,20 @@ function workerConvert(workerType, taskType, payload, taskId) {
         }
       }
       else if (type === 'error') {
-        worker.removeEventListener('message', handler);
-        reject(new Error(message));
+        fail(new Error(message));
       }
     }
 
+    function onWorkerError() {
+      // Worker 脚本加载/初始化失败（如 CDN 不可达）：不会再有任何消息，
+      // 必须在这里报错并把死 Worker 踢出连接池，否则下次转换还用它、继续挂起。
+      evict();
+      fail(new Error(getLang() === 'en' ? 'Worker failed to load. Please check your network and try again.' : 'Worker 加载失败，请检查网络后重试'));
+    }
+
+    armTimer();
     worker.addEventListener('message', handler);
+    worker.addEventListener('error', onWorkerError);
     worker.postMessage({ id: taskId, type: taskType, payload });
   });
 }
