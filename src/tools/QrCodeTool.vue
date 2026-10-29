@@ -5,43 +5,71 @@
       <button class="btn-secondary" @click="download">下载</button>
     </div>
     <input v-model="text" type="text" placeholder="输入内容..." @keyup.enter="generate">
+    <p v-if="error" class="qr-error">{{ error }}</p>
     <div class="qr-wrap">
-      <canvas ref="canvas" width="200" height="200"></canvas>
+      <canvas ref="canvas"></canvas>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import qrcode from 'qrcode-generator'
+
+// 该库默认按 Latin-1 编码字符串，中文/emoji 会被截断成乱码：
+// 改为 UTF-8 编码后再生成，扫码端才能读回原文（本地已用独立解码器验过中英/emoji/长文本）。
+qrcode.stringToBytes = (s) => Array.from(new TextEncoder().encode(s))
 
 const text = ref('https://github.com')
 const canvas = ref(null)
+const error = ref('')
 
 function drawQR(str) {
   const ctx = canvas.value.getContext('2d')
-  const size = 200
+  const qr = qrcode(0, 'M')
+  qr.addData(str)
+  qr.make()
+  const n = qr.getModuleCount()
+  const quiet = 4
+  const cell = 8
+  const size = (n + quiet * 2) * cell
+  canvas.value.width = size
+  canvas.value.height = size
   ctx.fillStyle = '#fff'
   ctx.fillRect(0, 0, size, size)
   ctx.fillStyle = '#000'
-  const cell = size / 25
-  for (let y = 0; y < 25; y++) {
-    for (let x = 0; x < 25; x++) {
-      const hash = Math.sin(x * 12.9898 + y * 78.233 + str.length * 37.719) * 43758.5453
-      if ((hash - Math.floor(hash)) > 0.5) ctx.fillRect(x * cell, y * cell, cell, cell)
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      if (qr.isDark(y, x)) ctx.fillRect((x + quiet) * cell, (y + quiet) * cell, cell, cell)
     }
   }
-  // Position markers
-  [[2, 2], [2, 18], [18, 2]].forEach(([ox, oy]) => {
-    ctx.fillRect(ox * cell, oy * cell, 7 * cell, 7 * cell)
-    ctx.fillStyle = '#fff'
-    ctx.fillRect((ox + 1) * cell, (oy + 1) * cell, 5 * cell, 5 * cell)
-    ctx.fillStyle = '#000'
-    ctx.fillRect((ox + 2) * cell, (oy + 2) * cell, 3 * cell, 3 * cell)
-  })
 }
 
-function generate() { drawQR(text.value || ' ') }
+function clearCanvas() {
+  const ctx = canvas.value.getContext('2d')
+  canvas.value.width = 200
+  canvas.value.height = 200
+  ctx.fillStyle = '#fff'
+  ctx.fillRect(0, 0, 200, 200)
+}
+
+function generate() {
+  const str = text.value.trim()
+  error.value = ''
+  if (!str) {
+    error.value = '请输入内容'
+    clearCanvas()
+    return
+  }
+  try {
+    drawQR(str)
+  } catch (e) {
+    error.value = '内容太长，生成失败，请缩短后重试'
+    clearCanvas()
+  }
+}
 function download() {
+  if (error.value) return
   const link = document.createElement('a')
   link.download = 'qrcode.png'
   link.href = canvas.value.toDataURL()
@@ -65,8 +93,9 @@ input {
   outline: none;
 }
 input:focus { border-color: var(--accent); }
+.qr-error { margin: 0; font-size: 0.8rem; color: #ef4444; }
 .qr-wrap { text-align: center; padding: 16px; }
-canvas { border-radius: 8px; border: 1px solid var(--border); }
+canvas { border-radius: 8px; border: 1px solid var(--border); max-width: 100%; height: auto; }
 .btn-primary, .btn-secondary {
   padding: 8px 16px;
   border-radius: 8px;

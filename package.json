@@ -12,6 +12,7 @@
     "docx": "^8.5.0",
     "mammoth": "^1.7.0",
     "pinia": "^2.1.7",
+    "qrcode-generator": "^2.0.4",
     "vue": "^3.4.21",
     "vue-i18n": "^9.14.0",
     "vue-router": "^4.3.0"
