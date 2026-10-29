@@ -1,6 +1,6 @@
 ﻿import {
   MAX_SIZE, CATEGORIES, getExt, getCat,
-  fmtSize, dlBlob, sleep, readAB, readText,
+  fmtSize, dlBlob, sleep, readAB, readText, readData,
   getSupportedTargets, t, setLang, getLang
 } from './utils.js';
 import { convImage } from './converters/image.js';
@@ -1600,6 +1600,18 @@ async function mergeFiles(selectedFiles, catId) {
   }
 
   if (catId === 'image') {
+    // 图片分类平时不加载 jsPDF（_CATEGORY_LIBS.image 为空），合并时才按需加载；
+    // 已在其他分类加载过则直接复用，不重复拉取。
+    if (!window.jspdf || typeof window.jspdf.jsPDF !== 'function') {
+      try {
+        await loadScript(CDN_LIBS.jspdf);
+      } catch {
+        throw new Error(getLang() === 'en' ? 'PDF library failed to load. Please check your network and retry.' : 'PDF 库加载失败，请检查网络后重试');
+      }
+      if (!window.jspdf || typeof window.jspdf.jsPDF !== 'function') {
+        throw new Error(getLang() === 'en' ? 'PDF library failed to load. Please check your network and retry.' : 'PDF 库加载失败，请检查网络后重试');
+      }
+    }
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
     for (let i = 0; i < selectedFiles.length; i++) {

@@ -132,20 +132,139 @@ function toXML(obj, root) {
   return x + '\n' + a + root + b + '\n' + build(obj, root) + '\n' + a + c + root + b;
 }
 
+// Worker 内没有 DOM，不能用 DOMParser：用一个小型 XML 解析器，
+// 语义与主线程 DOMParser 版 xmlToObj 保持一致：忽略属性，只保留
+// 元素结构；无子元素的取其文本（含 CDATA）；重复的同名子元素折成
+// 数组；有子元素时直接文本被忽略。格式错误的 XML 会抛错。
 function xmlToObj(xml) {
-  const doc = new DOMParser().parseFromString(xml, 'text/xml');
-  const parse = n => {
-    if (!n.children.length) return n.textContent;
+  let i = 0;
+  const len = xml.length;
+  if (xml.charCodeAt(0) === 0xFEFF) i = 1; // BOM
+  const fail = msg => { throw new Error('XML 解析失败：' + msg); };
+  const isWs = ch => ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r';
+
+  const decodeEntities = s => s.replace(/&(#x[0-9a-fA-F]+|#\d+|amp|lt|gt|quot|apos);/g, (m, body) => {
+    if (body === 'amp') return '&';
+    if (body === 'lt') return '<';
+    if (body === 'gt') return '>';
+    if (body === 'quot') return '"';
+    if (body === 'apos') return "'";
+    const code = body[1] === 'x' || body[1] === 'X' ? parseInt(body.slice(2), 16) : parseInt(body.slice(1), 10);
+    if (Number.isNaN(code) || code < 0 || code > 0x10FFFF) fail('无效的字符引用：' + m);
+    return String.fromCodePoint(code);
+  });
+
+  function skipMisc() {
+    for (;;) {
+      while (i < len && isWs(xml[i])) i++;
+      if (xml.startsWith('<!--', i)) {
+        const end = xml.indexOf('-->', i + 4);
+        if (end === -1) fail('注释未闭合');
+        i = end + 3;
+      } else if (xml.startsWith('<?', i)) {
+        const end = xml.indexOf('?>', i + 2);
+        if (end === -1) fail('处理指令未闭合');
+        i = end + 2;
+      } else if (/^<!doctype/i.test(xml.slice(i, i + 9))) {
+        // DOCTYPE：跳到 '>'，内部子集 [...] 里的 '>' 不算结束
+        let depth = 0, quote = null, j = i;
+        for (; j < len; j++) {
+          const ch = xml[j];
+          if (quote) { if (ch === quote) quote = null; }
+          else if (ch === '"' || ch === "'") quote = ch;
+          else if (ch === '[') depth++;
+          else if (ch === ']') depth--;
+          else if (ch === '>' && depth <= 0) break;
+        }
+        if (j >= len) fail('DOCTYPE 未闭合');
+        i = j + 1;
+      } else break;
+    }
+  }
+
+  function readName() {
+    const start = i;
+    while (i < len && !isWs(xml[i]) && xml[i] !== '/' && xml[i] !== '>') i++;
+    return xml.slice(start, i);
+  }
+
+  function parseElement() {
+    // 调用时 xml[i] === '<' 且不是 '</'、'<!'、'<?'
+    i++; // '<'
+    const name = readName();
+    if (!name) fail('缺少元素名');
+    // 跳过属性（属性值里的 '>' 不算标签结束）
+    let selfClosing = false, quote = null;
+    for (;;) {
+      if (i >= len) fail('元素 <' + name + '> 未闭合');
+      const ch = xml[i];
+      if (quote) { if (ch === quote) quote = null; i++; continue; }
+      if (ch === '"' || ch === "'") { quote = ch; i++; continue; }
+      if (ch === '/' && xml[i + 1] === '>') { selfClosing = true; i += 2; break; }
+      if (ch === '>') { i++; break; }
+      i++;
+    }
+    if (selfClosing) return { name, children: [], text: '' };
+    let text = '';
+    const children = [];
+    for (;;) {
+      if (i >= len) fail('元素 <' + name + '> 未闭合');
+      if (xml.startsWith('</', i)) {
+        i += 2;
+        while (i < len && isWs(xml[i])) i++;
+        const closeName = readName();
+        while (i < len && isWs(xml[i])) i++;
+        if (xml[i] !== '>') fail('结束标签格式错误');
+        i++;
+        if (closeName !== name) fail('标签不匹配：<' + name + '> 与 </' + closeName + '>');
+        return { name, children, text };
+      }
+      if (xml.startsWith('<!--', i)) {
+        const end = xml.indexOf('-->', i + 4);
+        if (end === -1) fail('注释未闭合');
+        i = end + 3;
+        continue;
+      }
+      if (xml.startsWith('<![CDATA[', i)) {
+        const end = xml.indexOf(']]>', i + 9);
+        if (end === -1) fail('CDATA 未闭合');
+        text += xml.slice(i + 9, end);
+        i = end + 3;
+        continue;
+      }
+      if (xml.startsWith('<?', i)) {
+        const end = xml.indexOf('?>', i + 2);
+        if (end === -1) fail('处理指令未闭合');
+        i = end + 2;
+        continue;
+      }
+      if (xml[i] === '<') { children.push(parseElement()); continue; }
+      const next = xml.indexOf('<', i);
+      const raw = next === -1 ? xml.slice(i) : xml.slice(i, next);
+      text += decodeEntities(raw);
+      i = next === -1 ? len : next;
+    }
+  }
+
+  const toValue = node => {
+    if (!node.children.length) return node.text;
     const o = {};
-    for (const ch of n.children) {
-      const k = ch.nodeName;
-      if (o[k] === undefined) o[k] = parse(ch);
-      else if (Array.isArray(o[k])) o[k].push(parse(ch));
-      else o[k] = [o[k], parse(ch)];
+    for (const ch of node.children) {
+      const v = toValue(ch);
+      if (o[ch.name] === undefined) o[ch.name] = v;
+      else if (Array.isArray(o[ch.name])) o[ch.name].push(v);
+      else o[ch.name] = [o[ch.name], v];
     }
     return o;
   };
-  return parse(doc.documentElement);
+
+  skipMisc();
+  if (i >= len) fail('文档为空');
+  if (xml[i] !== '<' || xml.startsWith('</', i) || xml.startsWith('<!', i) || xml.startsWith('<?', i)) fail('文档开头不是元素');
+  const root = parseElement();
+  skipMisc();
+  if (i < len) fail('根元素后有多余内容');
+  return toValue(root);
 }
 
 // ===== 主消息处理 =====

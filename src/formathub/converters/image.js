@@ -17,8 +17,8 @@ export async function convImage(file, target, opts = {}) {
     const img = await createImageBitmap(blob);
     // createImageBitmap 已解码完成，无需等待 onload
     canvas = document.createElement('canvas');
-    let w = img.naturalWidth || 800;
-    let h = img.naturalHeight || 600;
+    let w = img.width || 800;
+    let h = img.height || 600;
     if (rotate === 90 || rotate === 270) { const tmp = w; w = h; h = tmp; }
     canvas.width = w; canvas.height = h;
     ctx = canvas.getContext('2d');
@@ -30,8 +30,8 @@ export async function convImage(file, target, opts = {}) {
     const dataUrl = await readData(file);
     const blob = await file.slice(0, file.size, file.type);
     const img = await createImageBitmap(blob);
-    let w = img.naturalWidth;
-    let h = img.naturalHeight;
+    let w = img.width;
+    let h = img.height;
     if (maxW && w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
     if (maxH && h > maxH) { w = Math.round(w * maxH / h); h = maxH; }
     if (rotate === 90 || rotate === 270) { const tmp = w; w = h; h = tmp; }
@@ -40,7 +40,7 @@ export async function convImage(file, target, opts = {}) {
     ctx = canvas.getContext('2d');
     if (target !== 'png' && target !== 'webp' && target !== 'gif') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); }
     applyTransform(ctx, w, h, rotate);
-    ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, w, h);
+    ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, w, h);
   }
 
   const mime = target === 'jpg' ? 'image/jpeg' : 'image/' + target;
