@@ -39,30 +39,20 @@ export async function getGiteeDefaultBranch(owner, repo, signal) {
   return data.default_branch;
 }
 
-/* 经 Gitee contents 接口取单个文件内容并解 base64。
-   raw 地址会被浏览器跨域拦截（fetch 永远 Failed to fetch，导航打开却正常），故不走 raw。
-   未登录接口每小时 60 次：403 即限流，抛带标记的错，调用处不再逐个重试。 */
+/* 经自有 Cloudflare Worker 代理取单个文件内容。
+   Gitee raw 地址会被浏览器跨域拦截（fetch 永远 Failed to fetch，导航打开却正常），
+   故不直连 raw：Worker 在服务端取回文件并带跨域头返回，页面 fetch 可读。
+   代理只允许 Gitee raw 路径（/raw/<owner>/<repo>/<branch>/<path>），其余一律 404。
+   内容获取不走 api/v5，不消耗每小时 60 次的接口配额；文件夹列表仍走接口。 */
+const GITEE_RAW_PROXY = 'https://gitee-raw-proxy.liuziyi2333.workers.dev';
+
 async function fetchGiteeFileBlob(owner, repo, branch, path, signal) {
-  const api = `https://gitee.com/api/v5/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}?ref=${branch}`;
-  const resp = await fetch(api, { signal });
-  if (!resp.ok) {
-    const err = new Error(resp.status === 403
-      ? 'Gitee 接口访问受限 (403)，可能已触发每小时限额，请稍后再试'
-      : `获取文件内容失败 HTTP ${resp.status}`);
-    if (resp.status === 403) err.isRateLimit = true;
-    throw err;
-  }
-  const data = await resp.json();
-  if (data.type !== 'file' || !data.content) {
-    throw new Error('该文件无法通过接口获取内容（可能过大）');
-  }
-  const bin = atob(String(data.content).replace(/\s/g, ''));
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return new Blob([bytes]);
+  const resp = await fetch(`${GITEE_RAW_PROXY}/raw/${owner}/${repo}/${branch}/${path}`, { signal });
+  if (!resp.ok) throw new Error(`获取文件内容失败 HTTP ${resp.status}`);
+  return resp.blob();
 }
 
-/* 下载单个文件（走 contents 接口取 base64 内容） */
+/* 下载单个文件（走代理取内容） */
 export async function downloadGiteeFile(info, signal) {
   if (!info.branch) {
     info.branch = await getGiteeDefaultBranch(info.owner, info.repo, signal);
