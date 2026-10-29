@@ -1,8 +1,13 @@
 import { readData, getExt } from '../utils.js';
+import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 
 export async function convImage(file, target, opts = {}) {
   const ext = getExt(file.name);
-  const quality = opts.quality != null ? opts.quality : 0.92;
+  // 滑块给的是 10–100 的百分比，toBlob 要 0–1：大于 1 按百分比换算，
+  // 已是小数则直接用，并夹到 [0, 1]。以前 92 直接传给 toBlob 等于恒为最高质量，
+  // WebP 还被写死钳在 0.85，滑块等于摆设。
+  const rawQ = opts.quality != null ? opts.quality : 92;
+  const quality = Math.min(1, Math.max(0, rawQ > 1 ? rawQ / 100 : rawQ));
   const maxW = opts.width || null;
   const maxH = opts.height || null;
   const rotate = opts.rotate || 0;
@@ -38,14 +43,26 @@ export async function convImage(file, target, opts = {}) {
     canvas = document.createElement('canvas');
     canvas.width = w; canvas.height = h;
     ctx = canvas.getContext('2d');
-    if (target !== 'png' && target !== 'webp' && target !== 'gif') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); }
+    if (target !== 'png' && target !== 'webp') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); }
     applyTransform(ctx, w, h, rotate);
     ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, w, h);
   }
 
+  // GIF：浏览器 canvas.toBlob 不支持 image/gif（永远返回 null），
+  // 用 gifenc 编一帧静态 GIF（256 色调色板，无抖动）。画布已在上面垫白，
+  // 故此处像素均不透明。
+  if (target === 'gif') {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const palette = quantize(imageData.data, 256);
+    const index = applyPalette(imageData.data, palette);
+    const gif = GIFEncoder();
+    gif.writeFrame(index, canvas.width, canvas.height, { palette, first: true });
+    gif.finish();
+    return new Blob([gif.bytes()], { type: 'image/gif' });
+  }
+
   const mime = target === 'jpg' ? 'image/jpeg' : 'image/' + target;
-  const q = target === 'webp' ? Math.min(quality, 0.85) : quality;
-  const out = await new Promise(r => canvas.toBlob(r, mime, q));
+  const out = await new Promise(r => canvas.toBlob(r, mime, quality));
   if (!out) throw new Error('浏览器不支持导出此格式');
   return out;
 }
