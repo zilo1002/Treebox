@@ -254,7 +254,12 @@ function renderPdfToolboxPage(cat) {
       '<div class="rounded-2xl bg-slate-800/20 border border-slate-700/30 p-4">' + optionsHtml + '</div>' +
       '<button onclick="window.runPdfTool()" class="w-full py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl text-sm active:scale-[0.98] transition-all">' + actionLabel + '</button>' +
       '<div id="pdfResultArea"></div>' +
-    '</main></div>';
+    '</main></div>' +
+  '<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">'+
+    '<div class="px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-600 shadow-2xl flex items-center gap-2.5 whitespace-nowrap">'+
+      '<span id="toastIcon" class="text-base"></span><span id="toastMsg" class="text-sm font-medium"></span>'+
+    '</div>'+
+  '</div>';
 
   const input = document.getElementById('pdfFileInput');
   if (input) {
