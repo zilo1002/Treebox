@@ -149,6 +149,10 @@ export async function downloadGitHubFolder(info, onProgress, signal) {
   const zip = new window.JSZip();
   const folderName = info.path ? info.path.split('/').pop() : info.repo;
   let done = skipped;
+  // 进度记录必须累计：progress 是循环开始前读的旧快照，每次都拿它 + 当前文件
+  // 去保存，会丢掉本轮前面已下载的文件，中断后续传时又要重下。改用本轮内
+  // 持续追加的 doneFiles。
+  const doneFiles = [...(progress?.files || [])];
 
   for (const f of files) {
     if (signal?.aborted) throw new Error('已取消');
@@ -159,9 +163,10 @@ export async function downloadGitHubFolder(info, onProgress, signal) {
       const blob = await r.blob();
       zip.file(f.name, blob);
       done++;
+      if (!doneFiles.includes(f.path)) doneFiles.push(f.path);
       await saveDownloadProgress(downloadId, {
         owner: info.owner, repo: info.repo, branch: info.branch, path: info.path,
-        files: [...(progress?.files || []), f.path]
+        files: doneFiles
       });
       if (onProgress) onProgress(done, skipped + files.length, f.name);
     } catch (e) {
@@ -215,6 +220,8 @@ export async function downloadGitHubFolderFlat(info, keepPath, onProgress, signa
   const folderName = info.path ? info.path.split('/').pop() : info.repo;
   const usedNames = new Set();
   let done = skipped;
+  // 同上：进度记录必须累计，不能每次都拿循环前的旧快照 + 当前文件去保存。
+  const doneFiles = [...(progress?.files || [])];
 
   for (const f of files) {
     if (signal?.aborted) throw new Error('已取消');
@@ -243,9 +250,10 @@ export async function downloadGitHubFolderFlat(info, keepPath, onProgress, signa
 
       zip.file(flatName, blob);
       done++;
+      if (!doneFiles.includes(f.path)) doneFiles.push(f.path);
       await saveDownloadProgress(downloadId, {
         owner: info.owner, repo: info.repo, branch: info.branch, path: info.path,
-        files: [...(progress?.files || []), f.path]
+        files: doneFiles
       });
       if (onProgress) onProgress(done, skipped + files.length, f.name);
     } catch (e) {
