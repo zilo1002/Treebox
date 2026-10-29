@@ -430,7 +430,7 @@ function downloadResult() {
   a.href = url
   a.download = base + '_modified' + ext
   a.click()
-  URL.revokeObjectURL(url)
+  setTimeout(() => URL.revokeObjectURL(url), 5000)
 }
 
 function clear() {

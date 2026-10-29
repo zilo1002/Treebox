@@ -402,7 +402,7 @@ function exportTxt() {
   a.href = url
   a.download = (fileName.value ? fileName.value.replace(/\.[^.]+$/, '') : 'proofread') + '_fixed.txt'
   a.click()
-  URL.revokeObjectURL(url)
+  setTimeout(() => URL.revokeObjectURL(url), 5000)
 }
 
 function reset() {

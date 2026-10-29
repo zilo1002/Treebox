@@ -102,7 +102,7 @@ function download(ext) {
   a.href = objUrl
   a.download = base + '.' + ext
   a.click()
-  URL.revokeObjectURL(objUrl)
+  setTimeout(() => URL.revokeObjectURL(objUrl), 5000)
 }
 </script>
 

@@ -183,7 +183,7 @@ async function downloadAll() {
     a.href = url
     a.download = item.newName
     a.click()
-    URL.revokeObjectURL(url)
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
     await sleep(200)
   }
   downloading.value = false

@@ -744,7 +744,7 @@ async function exportDocx() {
     a.href = url
     a.download = (uploadedFileName.value || '文档') + '_已标注.docx'
     a.click()
-    URL.revokeObjectURL(url)
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
     alert('已导出 Word 文档 (.docx)')
   } catch (err) {
     console.error(err)
