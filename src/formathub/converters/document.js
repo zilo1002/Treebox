@@ -1,8 +1,15 @@
 import { readAB, readText, getExt } from '../utils.js';
 
+// 只有生成 PDF 的分支才需要 jsPDF：按需取用，库未加载时报明错，
+// 纯文本互转（txt/md/html/docx）不再因为 window.jspdf 未就绪而崩掉。
+function getJsPDF() {
+  const jsPDF = window.jspdf && window.jspdf.jsPDF;
+  if (typeof jsPDF !== 'function') throw new Error('PDF 生成库未加载成功，请检查网络后重试 / PDF library failed to load, please check your connection and retry');
+  return jsPDF;
+}
+
 export async function convDoc(file, target) {
   const ext = getExt(file.name);
-  const { jsPDF } = window.jspdf;
 
   if (ext === 'docx') {
     const ab = await readAB(file);
@@ -27,7 +34,7 @@ export async function convDoc(file, target) {
       document.body.appendChild(div);
       const canvas = await html2canvas(div, { scale: 2 });
       document.body.removeChild(div);
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdf = new (getJsPDF())('p', 'mm', 'a4');
       const imgData = canvas.toDataURL('image/png');
       const imgWidth = 210;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -58,7 +65,7 @@ export async function convDoc(file, target) {
 
   if (['txt', 'md'].includes(ext) && target === 'pdf') {
     const text = await readText(file);
-    const pdf = new jsPDF();
+    const pdf = new (getJsPDF())();
     const lines = pdf.splitTextToSize(text, 180);
     let y = 20;
     for (const line of lines) {
