@@ -181,8 +181,8 @@ export async function mergeDocs(files, target, customName) {
     }
   }
   const joined = contents.join('\n\n---\n\n');
-  const mime = target === 'html' ? 'text/html' : 'text/plain';
-  const ext = target === 'html' ? 'html' : 'txt';
+  const mime = target === 'html' ? 'text/html' : (target === 'md' ? 'text/markdown' : 'text/plain');
+  const ext = target === 'html' ? 'html' : (target === 'md' ? 'md' : 'txt');
   const name = customName || ('merged.' + ext);
   return { blob: new Blob([joined], { type: mime + ';charset=utf-8' }), name };
 }

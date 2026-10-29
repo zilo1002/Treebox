@@ -358,7 +358,10 @@ window.movePdfFile = function(idx, dir) {
   const next = idx + dir;
   if (next < 0 || next >= pdfToolFiles.length) return;
   const tmp = pdfToolFiles[idx]; pdfToolFiles[idx] = pdfToolFiles[next]; pdfToolFiles[next] = tmp;
+  // 顺序变了，旧结果（按旧顺序生成）不能再留着展示。
+  pdfResult = null;
   renderPdfFileList();
+  renderPdfResultArea();
 };
 window.downloadPdfResult = function() { if (pdfResult) dlBlob(pdfResult.blob, pdfResult.name); };
 
@@ -464,7 +467,7 @@ async function renderCategoryPage(catId) {
       '<div class="grid grid-cols-3 gap-2">'+
         '<div><label class="text-[10px] text-slate-500 block mb-1">'+t('imageWidth')+'</label><input type="number" id="imgWidth" value="'+imageOpts.width+'" placeholder="auto" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-xs text-slate-200 focus:border-'+cat.color+'-500 focus:outline-none" onchange="window.updateImgWidth(this.value)"></div>'+
         '<div><label class="text-[10px] text-slate-500 block mb-1">'+t('imageHeight')+'</label><input type="number" id="imgHeight" value="'+imageOpts.height+'" placeholder="auto" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-xs text-slate-200 focus:border-'+cat.color+'-500 focus:outline-none" onchange="window.updateImgHeight(this.value)"></div>'+
-        '<div><label class="text-[10px] text-slate-500 block mb-1">'+t('imageRotate')+'</label><select id="imgRotate" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-xs text-slate-200 focus:border-'+cat.color+'-500 focus:outline-none" onchange="window.updateImgRotate(this.value)"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></div>'+
+        '<div><label class="text-[10px] text-slate-500 block mb-1">'+t('imageRotate')+'</label><select id="imgRotate" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-xs text-slate-200 focus:border-'+cat.color+'-500 focus:outline-none" onchange="window.updateImgRotate(this.value)"><option value="0"'+(imageOpts.rotate === 0 ? ' selected' : '')+'>0°</option><option value="90"'+(imageOpts.rotate === 90 ? ' selected' : '')+'>90°</option><option value="180"'+(imageOpts.rotate === 180 ? ' selected' : '')+'>180°</option><option value="270"'+(imageOpts.rotate === 270 ? ' selected' : '')+'>270°</option></select></div>'+
       '</div>'+
     '</div>';
   }
@@ -1847,7 +1850,9 @@ window.pasteGitHubUrl = async function() {
   try {
     const text = await navigator.clipboard.readText();
     const input = document.getElementById('githubUrl');
-    if (input && isGitHubUrl(text)) {
+    // 粘贴按钮也要按当前平台校验：Gitee 模式下只认 Gitee 链接（行内 paste 监听早已如此）。
+    const ok = githubPlatform === 'gitee' ? isGiteeUrl(text) : isGitHubUrl(text);
+    if (input && ok) {
       input.value = text.trim();
       toast('📋', t('paste') + ' ' + t('done'));
     } else {
@@ -1915,8 +1920,8 @@ window.startGitHubDownload = async function() {
     const downloadId = `${info.owner}/${info.repo}/${info.branch}/${info.path || '__root__'}${mode === 'flat' ? '_flat' : ''}`;
     const prevProgress = await getDownloadProgress(downloadId);
     if (prevProgress && prevProgress.files && prevProgress.files.length > 0) {
-      const allFiles = prevProgress.files.length + 1;
-      if (!confirm(t('resumeFound').replace('{done}', prevProgress.files.length).replace('{total}', allFiles))) {
+      // 总数在取文件列表前是不知道的：以前写死 done+1 是错的，只报已下载数。
+      if (!confirm(t('resumeFound').replace('{done}', prevProgress.files.length))) {
         await clearDownloadProgress(downloadId);
       }
     }

@@ -143,6 +143,7 @@ export const I18N = {
     githubUrlHint: '支持 blob 文件链接和 tree 文件夹链接',
     githubFetching: '正在获取文件列表...',
     githubProgress: '已下载 {done}/{total} · {name}',
+    downloading: '下载中...',
     githubZipSuccess: '打包完成：{done}/{total} 个文件',
     githubRateHint: 'API 剩余：{remain}/{limit} 次/小时',
     githubNoteTitle: '使用说明',
@@ -172,7 +173,7 @@ export const I18N = {
     mirrorMirrorGH: 'Mirror.gh',
     mirrorFastGit: 'FastGit',
     resumeDownload: '继续下载',
-    resumeFound: '发现未完成的下载，已下载 {done}/{total}，是否继续？',
+    resumeFound: '发现未完成的下载，已下载 {done} 个文件，是否继续？',
     releaseDownload: 'Release 下载',
     releaseUrlLabel: '仓库地址',
     releaseUrlHint: '如：github.com/owner/repo',
@@ -303,6 +304,7 @@ export const I18N = {
     githubUrlHint: 'Supports blob file links and tree folder links',
     githubFetching: 'Fetching file list...',
     githubProgress: 'Downloaded {done}/{total} · {name}',
+    downloading: 'Downloading...',
     githubZipSuccess: 'Packaged: {done}/{total} files',
     githubRateHint: 'API remaining: {remain}/{limit} per hour',
     githubNoteTitle: 'Instructions',
@@ -332,7 +334,7 @@ export const I18N = {
     mirrorMirrorGH: 'Mirror.gh',
     mirrorFastGit: 'FastGit',
     resumeDownload: 'Resume Download',
-    resumeFound: 'Found unfinished download: {done}/{total}, resume?',
+    resumeFound: 'Found unfinished download: {done} file(s) downloaded. Resume?',
     releaseDownload: 'Release Download',
     releaseUrlLabel: 'Repository URL',
     releaseUrlHint: 'e.g. github.com/owner/repo',
@@ -487,13 +489,14 @@ export const CATEGORIES = {
     borderColor: 'border-emerald-500/30',
     textColor: 'text-emerald-400',
     dotColor: 'bg-emerald-400',
-    accept: '.json,.xml,.csv,.yaml,.yml',
-    exts: ['json','xml','csv','yaml','yml'],
+    accept: '.json,.xml,.csv,.yaml,.yml,.toml',
+    exts: ['json','xml','csv','yaml','yml','toml'],
     targets: {
       json: { label: 'JSON', labelEn: 'JSON', ext: 'json' },
       xml: { label: 'XML', labelEn: 'XML', ext: 'xml' },
       csv: { label: 'CSV', labelEn: 'CSV', ext: 'csv' },
       yaml: { label: 'YAML', labelEn: 'YAML', ext: 'yaml' },
+      toml: { label: 'TOML', labelEn: 'TOML', ext: 'toml' },
       zip: { label: 'ZIP 压缩包', labelEn: 'ZIP Archive', ext: 'zip' },
       extract: { label: '解压提取', labelEn: 'Extract files', ext: 'extract' }
     }
@@ -542,11 +545,12 @@ export const SUPPORTED_MATRIX = {
     pdf:   ['epub','txt','html']
   },
   data: {
-    json:  ['json','xml','csv','yaml'],
-    xml:   ['json','xml','csv','yaml'],
-    csv:   ['json','xml','csv','yaml'],
-    yaml:  ['json','xml','csv','yaml'],
-    yml:   ['json','xml','csv','yaml'],
+    json:  ['json','xml','csv','yaml','toml'],
+    xml:   ['json','xml','csv','yaml','toml'],
+    csv:   ['json','xml','csv','yaml','toml'],
+    yaml:  ['json','xml','csv','yaml','toml'],
+    yml:   ['json','xml','csv','yaml','toml'],
+    toml:  ['json','xml','csv','yaml','toml'],
     zip:   ['extract', 'zip']
   }
 };
