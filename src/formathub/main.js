@@ -568,7 +568,7 @@ async function renderCategoryPage(catId) {
       '<div id="mergeArea" class="hidden rounded-2xl p-4 space-y-3">'+
         '<div class="flex items-center gap-2">'+
           '<span class="text-xs text-slate-400">'+t('mergeTo')+':</span>'+
-          '<select id="mergeTarget" class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:border-'+cat.color+'-500 focus:outline-none">'+
+          '<select id="mergeTarget" onchange="window.syncMergeName()" class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:border-'+cat.color+'-500 focus:outline-none">'+
             '<option value="txt">TXT</option><option value="md">Markdown</option><option value="html">HTML</option>'+
           '</select>'+
         '</div>'+
@@ -1354,11 +1354,27 @@ window.clearCompleted = function() {
   }
   renderFiles(currentCat);
   toast('🗑️', t('cleared').replace('{count}', String(count)));
-};window.startMerge = async function() {
+};
+
+// 合并文件名后缀必须跟合并格式一致：输入框默认填 merged.txt，若原样传给合并函数，
+// 选 Markdown 也会产出 .txt 文件。这里统一按目标格式改后缀，用户自定的名字主体保留。
+function mergeFileName(customName, target) {
+  const ext = target === 'html' ? 'html' : (target === 'md' ? 'md' : 'txt');
+  const base = (customName || '').replace(/\.[^.]+$/, '') || 'merged';
+  return base + '.' + ext;
+}
+
+window.syncMergeName = function() {
+  const target = document.getElementById('mergeTarget')?.value || 'txt';
+  const input = document.getElementById('mergeName');
+  if (input) input.value = mergeFileName(input.value, target);
+};
+
+window.startMerge = async function() {
   const selected = files.filter(f => f.selected);
   if (selected.length < 2) { toast('⚠️', '请至少选择 2 个文件'); return; }
   const target = document.getElementById('mergeTarget')?.value || 'txt';
-  const customName = document.getElementById('mergeName')?.value || 'merged.txt';
+  const customName = mergeFileName(document.getElementById('mergeName')?.value || '', target);
   try {
     const { blob, name } = await mergeDocs(selected.map(f => f.file), target, customName);
     dlBlob(blob, name);
@@ -1631,7 +1647,8 @@ window.compressMergeSelected = async function() {
    ============================================================ */
 async function mergeFiles(selectedFiles, catId) {
   const target = document.getElementById('mergeTarget')?.value || 'txt';
-  const customName = document.getElementById('mergeName')?.value || 'merged.txt';
+  const rawName = document.getElementById('mergeName')?.value || 'merged.txt';
+  const customName = mergeFileName(rawName, target);
 
   if (catId === 'document') {
     return await mergeDocs(selectedFiles.map(f => f.file), target, customName);
@@ -1668,8 +1685,8 @@ async function mergeFiles(selectedFiles, catId) {
       }
     }
     const joined = contents.join('\n\n---\n\n');
-    const mime = target === 'html' ? 'text/html' : 'text/plain';
-    const ext = target === 'html' ? 'html' : 'txt';
+    const mime = target === 'html' ? 'text/html' : (target === 'md' ? 'text/markdown' : 'text/plain');
+    const ext = target === 'html' ? 'html' : (target === 'md' ? 'md' : 'txt');
     const name = customName || ('merged.' + ext);
     return { blob: new Blob([joined], { type: mime + ';charset=utf-8' }), name };
   }
