@@ -46,9 +46,13 @@ const workerPool = {
   get(type) {
     if (!this[type]) {
       try {
-        this[type] = new Worker(new URL('./workers/' + type + '.worker.js', import.meta.url));
+        // 必须用字面量 URL：拼字符串的 new URL Vite 无法静态分析，
+        // 不会产出 Worker chunk，运行时加载 404、转换永远挂起。
+        if (type === 'data') this[type] = new Worker(new URL('./workers/data.worker.js', import.meta.url));
+        else if (type === 'doc') this[type] = new Worker(new URL('./workers/doc.worker.js', import.meta.url));
+        else if (type === 'ebook') this[type] = new Worker(new URL('./workers/ebook.worker.js', import.meta.url));
+        else return null;
       } catch (e) {
-        // 降级：如果 Worker 创建失败，返回 null，主线程处理
         console.warn('Worker creation failed for ' + type + ':', e);
         return null;
       }
