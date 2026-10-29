@@ -144,6 +144,7 @@ function manageMemory() {
     for (const item of toRelease) {
       item.convertedBlob = null;
       item.convertedSize = null;
+      item.evicted = true;
     }
     if (toRelease.length > 0) {
       toast('🗑️', t('autoCleaned').replace('{count}', String(toRelease.length)));
@@ -1019,6 +1020,9 @@ function renderFiles(catId) {
           t('compressDownload') +
         '</button>' +
       '</div>';
+    } else if (item.status === 'done' && item.evicted) {
+      // 结果已被自动/手动清理：下载按钮已不存在，留一句说明而不是静默无按钮。
+      actionButtons = '<p class="mt-3 text-xs text-slate-500">' + t('resultCleared') + '</p>';
     }
 
     html += '<div class="slide-in rounded-xl bg-slate-800/40 border border-slate-700/40 p-4 ' + (item.status === 'done' ? 'border-emerald-500/20' : '') + ' ' + (item.selected ? 'ring-1 ring-' + cat.color + '-500/30' : '') + '">' +
@@ -1174,6 +1178,7 @@ async function startConvert(catId) {
       item.convertedBlob = blob;
       item.convertedName = item.customName || item.file.name.replace(/\.[^.]+$/i, '.' + cat.targets[target].ext);
       item.convertedSize = blob.size;
+      item.evicted = false;
       item.progress = 100;
       item.status = 'done';
 
@@ -1340,6 +1345,7 @@ window.clearCompleted = function() {
     if (item.status === 'done' && item.convertedBlob) {
       item.convertedBlob = null;
       item.convertedSize = null;
+      item.evicted = true;
       count++;
     }
   }
@@ -1522,9 +1528,13 @@ window.deselectAll = function() {
    ============================================================ */
 window.downloadFile = function(idx) {
   const item = files[idx];
-  if (item && item.convertedBlob) {
+  if (!item) return;
+  if (item.convertedBlob) {
     dlBlob(item.convertedBlob, item.convertedName);
     toast('✅', t('download') + ': ' + item.convertedName);
+  } else if (item.status === 'done') {
+    // 旧渲染的按钮在结果被清理后才被点到：明说已清理，而不是静默无反应。
+    toast('⚠️', t('resultCleared'));
   }
 };
 
