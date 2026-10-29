@@ -600,7 +600,9 @@ export function dlBlob(blob, name) {
   a.href = url; a.download = name;
   document.body.appendChild(a); a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  // 不能立即吊销：Safari 等浏览器是异步开始下载的，立即吊销会下到空文件/失败。
+  // 5 秒后吊销足够下载启动，又不会长期占用内存。
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 export function readAB(file) { return new Promise((r,j)=>{const R=new FileReader();R.onload=e=>r(e.target.result);R.onerror=j;R.readAsArrayBuffer(file);}); }
 export function readText(file) { return new Promise((r,j)=>{const R=new FileReader();R.onload=e=>r(e.target.result);R.onerror=j;R.readAsText(file);}); }
