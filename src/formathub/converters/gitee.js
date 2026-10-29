@@ -12,12 +12,18 @@ const GITEE_URL_REGEX = /^https?:\/\/gitee\.com\/([^\/]+)\/([^\/]+)(?:\/(blob|tr
 export function parseGiteeUrl(url) {
   const m = url.trim().match(GITEE_URL_REGEX);
   if (!m) return null;
+  // 路径里有孤立的 %（如文件名含 100%）时 decodeURIComponent 会抛 URIError：
+  // 当作无效链接返回 null，调用处会提示“链接无效”，而不是毫无反应。
+  let path = '';
+  if (m[5]) {
+    try { path = decodeURIComponent(m[5]); } catch { return null; }
+  }
   return {
     owner: m[1],
     repo: m[2],
     type: m[3] || 'tree',
     branch: m[4] || null,
-    path: m[5] ? decodeURIComponent(m[5]) : ''
+    path
   };
 }
 
