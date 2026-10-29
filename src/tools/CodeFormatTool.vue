@@ -206,8 +206,11 @@ function onDrop(e) {
 }
 
 function copyCode() {
+  if (!navigator.clipboard?.writeText) { alert('复制失败，请检查浏览器剪贴板权限'); return }
   navigator.clipboard.writeText(content.value).then(() => {
     alert('已复制到剪贴板')
+  }).catch(() => {
+    alert('复制失败，请检查浏览器剪贴板权限')
   })
 }
 

@@ -3,6 +3,7 @@ import { useAppStore } from '../stores/app'
 
 export function useTheme() {
   const store = useAppStore()
+  let mql = null
   let mqlHandler = null
 
   function apply() {
@@ -84,14 +85,15 @@ export function useTheme() {
 
   onMounted(() => {
     apply()
-    const mql = window.matchMedia('(prefers-color-scheme: dark)')
+    // 同一个 MediaQueryList 对象要留着，卸载时才能真正移除监听；
+    // 重新 matchMedia 拿到的不一定是同一对象，移除会静默失败。
+    mql = window.matchMedia('(prefers-color-scheme: dark)')
     mqlHandler = () => apply()
     mql.addEventListener('change', mqlHandler)
   })
 
   onUnmounted(() => {
-    const mql = window.matchMedia('(prefers-color-scheme: dark)')
-    if (mqlHandler) mql.removeEventListener('change', mqlHandler)
+    if (mql && mqlHandler) mql.removeEventListener('change', mqlHandler)
   })
 
   watch(

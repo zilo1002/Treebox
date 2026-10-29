@@ -119,6 +119,7 @@ async function paragraphsToPdfBlob(paragraphs, title) {
 }
 
 async function pdfTextToEpubBlob(pagesText, title) {
+  if (typeof JSZip === 'undefined') throw new Error('ZIP 压缩库加载失败，请检查网络后重试');
   const safeTitle = title || 'Converted Book';
   const zip = new JSZip();
   zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
@@ -161,6 +162,7 @@ export async function convEbook(file, target) {
   const baseTitle = file.name.replace(/\.[^.]+$/, '');
 
   if (ext === 'epub') {
+    if (typeof JSZip === 'undefined') throw new Error('ZIP 压缩库加载失败，请检查网络后重试');
     const ab = await readAB(file);
     const zip = await JSZip.loadAsync(ab);
     if (target === 'txt') {

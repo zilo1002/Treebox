@@ -1119,9 +1119,13 @@ async function startConvert(catId) {
           const ab = await readAB(item.file);
           blob = await workerConvert('data', 'convertXLSX', { arrayBuffer: ab, target }, item.id);
         } else {
-          // JSON/XML/YAML/TOML/CSV 互转：Worker 处理
+          // JSON/XML/YAML/TOML/CSV 互转：Worker 处理；Worker 失败时主线程降级
           const text = await readText(item.file);
-          blob = await workerConvert('data', 'convert', { text, ext, target }, item.id);
+          try {
+            blob = await workerConvert('data', 'convert', { text, ext, target }, item.id);
+          } catch (workerErr) {
+            blob = await convDataFallback(item.file, target, workerErr);
+          }
         }
       }
       else if (catId === 'document') {
@@ -1230,6 +1234,21 @@ async function startConvert(catId) {
 // Worker 任务超时：首次加载要拉 CDN 库，实测可能要一分钟以上，
 // 给足 120 秒无动静才判超时；有进展消息就续命。
 const WORKER_TIMEOUT_MS = 120000;
+
+// 数据转换主线程降级：Worker 失败（CDN 拉不到、Worker 崩溃、超时）时，
+// 在主线程加载 Papa/js-yaml 后用 convData 重试一次，而不是直接报错。
+// 覆盖 json/xml/csv/yaml 互转；TOML 的解析/序列化只存在于 Worker 内联实现，
+// 主线程没有，遇上 TOML 直接保留 Worker 的原始报错；XLSX 走另一条 Worker 路径，不在此降级。
+async function convDataFallback(file, target, workerErr) {
+  const ext = getExt(file.name);
+  if (ext === 'toml' || target === 'toml') throw workerErr;
+  await loadScript(CDN_LIBS.papaparse);
+  await loadScript(CDN_LIBS.jsyaml);
+  if (typeof Papa === 'undefined' || typeof jsyaml === 'undefined') {
+    throw new Error(getLang() === 'en' ? 'Conversion libraries failed to load. Please check your network and try again.' : '转换库加载失败，请检查网络后重试');
+  }
+  return convData(file, target);
+}
 
 function workerConvert(workerType, taskType, payload, taskId) {
   return new Promise((resolve, reject) => {
@@ -1560,6 +1579,7 @@ window.downloadFile = function(idx) {
 window.compressFile = async function(idx) {
   const item = files[idx];
   if (!item) return;
+  if (typeof JSZip === 'undefined') { toast('❌', getLang() === 'en' ? 'ZIP library not loaded yet' : '压缩库还没加载好，稍等一下再试'); return; }
   try {
     const zip = new JSZip();
     const blob = item.convertedBlob || item.file;
@@ -1630,6 +1650,7 @@ window.compressMergeSelected = async function() {
   const selected = files.filter(f => f.selected);
   if (selected.length < 1) { toast('⚠️', '请先选择文件'); return; }
   if (selected.length < 2) { toast('⚠️', '请至少选择 2 个文件'); return; }
+  if (typeof JSZip === 'undefined') { toast('❌', getLang() === 'en' ? 'ZIP library not loaded yet' : '压缩库还没加载好，稍等一下再试'); return; }
   try {
     const { blob, name } = await mergeFiles(selected, currentCat);
     const zip = new JSZip();
@@ -1655,6 +1676,7 @@ async function mergeFiles(selectedFiles, catId) {
   }
 
   if (catId === 'ebook') {
+    if (typeof JSZip === 'undefined') throw new Error(getLang() === 'en' ? 'ZIP library not loaded yet' : '压缩库还没加载好，稍等一下再试');
     let contents = [];
     for (const item of selectedFiles) {
       const ext = getExt(item.file.name);
@@ -1745,6 +1767,7 @@ async function mergeFiles(selectedFiles, catId) {
    ZIP 打包工具
    ============================================================ */
 async function packFilesToZip(items, zipName) {
+  if (typeof JSZip === 'undefined') throw new Error(getLang() === 'en' ? 'ZIP library not loaded yet' : '压缩库还没加载好，稍等一下再试');
   const zip = new JSZip();
   for (const item of items) {
     const blob = item.convertedBlob || item.file;

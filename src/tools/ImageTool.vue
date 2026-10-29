@@ -135,6 +135,9 @@ function onDrop(e) {
 function handleFile(file) {
   if (!file || !file.type.startsWith('image/')) return
   const reader = new FileReader()
+  reader.onerror = () => {
+    alert('图片无法读取，请换一张图片试试')
+  }
   reader.onload = async (e) => {
     const img = new Image()
     img.onload = () => {
@@ -148,6 +151,9 @@ function handleFile(file) {
       // Auto set max dimension to original max side
       maxDimension.value = Math.max(img.naturalWidth, img.naturalHeight)
       nextTick(() => compress())
+    }
+    img.onerror = () => {
+      alert('图片无法读取，请换一张图片试试')
     }
     img.src = e.target.result
   }

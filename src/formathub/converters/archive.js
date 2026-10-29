@@ -35,6 +35,7 @@ function loadZipJs() {
 export async function convArchive(file, target, password = '') {
   const ext = getExt(file.name);
   if (ext === 'zip' && target === 'zip') {
+    if (typeof JSZip === 'undefined') throw new Error('ZIP 压缩库加载失败，请检查网络后重试');
     const ab = await readAB(file);
     const zip = await JSZip.loadAsync(ab);
     const out = await zip.generateAsync({ type: 'blob' });

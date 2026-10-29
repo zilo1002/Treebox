@@ -415,8 +415,11 @@ function skipConflicts() {
 
 function copyResult() {
   const text = modifiedLines.value.join('\n')
+  if (!navigator.clipboard?.writeText) { alert('复制失败，请检查浏览器剪贴板权限'); return }
   navigator.clipboard.writeText(text).then(() => {
     alert(t.value.codereplace?.copied || '已复制到剪贴板')
+  }).catch(() => {
+    alert('复制失败，请检查浏览器剪贴板权限')
   })
 }
 
