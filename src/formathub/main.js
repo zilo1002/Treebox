@@ -17,6 +17,7 @@ import { RAW_MIRRORS, getRawMirror, setRawMirror, getDownloadProgress, clearDown
 let currentCat = null;
 let files = [];
 let converting = false;
+let convertRun = 0; // 转换轮次：切走工具时 +1，旧轮次的循环不再碰界面与状态
 let imageOpts = { quality: 92, width: '', height: '', rotate: 0 };
 let mergeMode = false;
 let formatMode = false;
@@ -929,6 +930,10 @@ function renderFiles(catId) {
   const batchBar = document.getElementById('batchBar');
   const cat = CATEGORIES[catId];
 
+  // 工具已切走、元素不在页面上时直接返回：转换循环可能还在后台跑，
+  // 这里抛错会让 startConvert 中途夭折、converting 永久为真。
+  if (!list || !area) return;
+
   if (!files.length) {
     list.classList.add('hidden');
     area.classList.add('hidden');
@@ -1049,16 +1054,23 @@ function renderFiles(catId) {
 async function startConvert(catId) {
   if (converting || !files.length) return;
   converting = true;
+  const runId = ++convertRun;
 
   // 显示全局进度
   showGlobalProgress(files.length);
 
   const btn = document.getElementById('convertBtn');
   const cat = CATEGORIES[catId];
-  btn.disabled = true;
-  btn.innerHTML = '<span class="inline-flex items-center gap-2"><span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>'+t('converting')+'</span>';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="inline-flex items-center gap-2"><span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>'+t('converting')+'</span>';
+  }
 
+  // try/finally：循环内任何 try 之外的抛错（例如切走工具后元素消失）
+  // 都不能让 converting 永久为真；finally 里只有当前轮次才能收尾。
+  try {
   for (let i = 0; i < files.length; i++) {
+    if (runId !== convertRun) return;
     const item = files[i];
     const target = item.target;
     item.status = 'converting';
@@ -1149,6 +1161,9 @@ async function startConvert(catId) {
         }
       }
 
+      // 切走后醒来：丢弃本轮结果，不写回、不 toast
+      if (runId !== convertRun) return;
+
       if (!blob) throw new Error('转换未返回文件');
 
       item.convertedBlob = blob;
@@ -1171,20 +1186,28 @@ async function startConvert(catId) {
       toast('❌', '「'+item.file.name+'」'+item.error);
     }
 
+    if (runId !== convertRun) return;
     renderFiles(catId);
     manageMemory();
     await sleep(200);
   }
+  } finally {
+    // 只有当前轮次才能碰全局进度与按钮：旧轮次在 finally 里什么都不做，
+    // 否则会关掉新一轮的进度条、清掉新一轮的 converting。
+    if (runId === convertRun) {
+      hideGlobalProgress();
+      converting = false;
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> '+t('startConvert');
+      }
 
-  hideGlobalProgress();
-  converting = false;
-  btn.disabled = false;
-  btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> '+t('startConvert');
-
-  const postActions = document.getElementById('postConvertActions');
-  const hasDone = files.some(f => f.status === 'done' && f.convertedBlob);
-  if (postActions && hasDone) {
-    postActions.classList.remove('hidden');
+      const postActions = document.getElementById('postConvertActions');
+      const hasDone = files.some(f => f.status === 'done' && f.convertedBlob);
+      if (postActions && hasDone) {
+        postActions.classList.remove('hidden');
+      }
+    }
   }
 }
 
@@ -2006,9 +2029,24 @@ export function initFormatHub(container, initialView) {
   currentCat = null;
   mergeMode = false;
   formatMode = false;
+  converting = false;
+  // 工具级工作状态不跨次残留：上次离开时 PDF/压缩列表里的文件、结果与选项全部清掉，
+  // 再进工具时从干净状态开始（平台选择 githubPlatform 与图片选项 imageOpts 是用户设置，保留）。
+  pdfTool = 'split';
+  pdfToolFiles = [];
+  pdfOpts = { range: '', watermarkText: '', fontSize: 36, opacity: 0.3, position: 'center', rotation: -30, password: '' };
+  pdfResult = null;
+  pdfPageCounts = new Map();
+  archiveFiles = [];
+  releaseAssets = [];
   app.addEventListener('click', handleClick);
   render();
   return function destroyFormatHub() {
+    // 正在跑的转换就此作废：轮次 +1 让旧循环在下一次检查时退出；
+    // converting 与全局进度立即复位，回来后转换按钮不再卡死。
+    convertRun++;
+    converting = false;
+    hideGlobalProgress();
     app.removeEventListener('click', handleClick);
     workerPool.terminateAll();
     app = null;
