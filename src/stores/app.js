@@ -61,7 +61,8 @@ export const useAppStore = defineStore('app', () => {
   // === 信封状态：用 sessionStorage 判断是否是新会话 ===
   // 新会话（关闭标签后重新打开）→ 显示信封
   // 同一会话中刷新 → 不显示信封，保持当前页面
-  const sessionOpened = sessionStorage.getItem('toolbox_session_opened')
+  let sessionOpened = null
+  try { sessionOpened = sessionStorage.getItem('toolbox_session_opened') } catch { /* 存储被禁时按新会话处理，不白屏 */ }
   const opened = ref(sessionOpened ? true : false)
 
   // === 新增 ===
@@ -129,6 +130,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   function persist() {
+    try {
     localStorage.setItem('toolbox_v1', JSON.stringify({
       version: DATA_VERSION,
       categories: categories.value,
@@ -148,6 +150,7 @@ export const useAppStore = defineStore('app', () => {
       enableGlass: enableGlass.value,
       reduceMotion: reduceMotion.value,
     }))
+    } catch { /* 存储满/被禁时只放弃持久化，不让 watcher 抛错 */ }
   }
 
   watch([

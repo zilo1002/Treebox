@@ -1,5 +1,14 @@
 ﻿﻿export const MAX_SIZE = 200 * 1024 * 1024;
 
+// 存储被禁/损坏（隐私模式、配额满）时读写 localStorage 会抛错：
+// 全部经这两个小函数走，失败只返回空/放弃，不让页面白屏。
+export function safeStorageGet(key) {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+export function safeStorageSet(key, value) {
+  try { localStorage.setItem(key, value); } catch { /* 放弃持久化而已 */ }
+}
+
 /* ============================================================
    GitHub Raw 镜像源配置
    ============================================================ */
@@ -11,12 +20,12 @@ export const RAW_MIRRORS = {
 };
 
 export function getRawMirror() {
-  const saved = localStorage.getItem('formathub-raw-mirror');
+  const saved = safeStorageGet('formathub-raw-mirror');
   return saved && RAW_MIRRORS[saved] ? saved : 'github';
 }
 
 export function setRawMirror(key) {
-  localStorage.setItem('formathub-raw-mirror', key);
+  safeStorageSet('formathub-raw-mirror', key);
 }
 
 /* ============================================================
@@ -404,9 +413,9 @@ export const I18N = {
   }
 };
 
-let currentLang = localStorage.getItem('formathub-lang') || 'zh';
+let currentLang = safeStorageGet('formathub-lang') || 'zh';
 export function t(key) { return I18N[currentLang]?.[key] || I18N['zh'][key] || key; }
-export function setLang(lang) { currentLang = lang; localStorage.setItem('formathub-lang', lang); }
+export function setLang(lang) { currentLang = lang; safeStorageSet('formathub-lang', lang); }
 export function getLang() { return currentLang; }
 
 export const CATEGORIES = {

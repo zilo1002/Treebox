@@ -61,7 +61,7 @@ const showSearch = ref(false)
 provide('showSearch', showSearch)
 
 function onOpen() {
-  sessionStorage.setItem('toolbox_session_opened', '1')
+  try { sessionStorage.setItem('toolbox_session_opened', '1') } catch { /* 存储被禁时只影响下次是否显示信封 */ }
   store.opened = true
   router.replace('/')
 }

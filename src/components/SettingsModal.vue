@@ -220,10 +220,10 @@ function setLocale(key) {
   if (key === 'auto') {
     const sys = navigator.language.startsWith('zh') ? 'zh' : 'en'
     locale.value = sys
-    localStorage.setItem('toolbox_locale', sys)
+    try { localStorage.setItem('toolbox_locale', sys) } catch { /* 存储被禁时只影响下次启动语言 */ }
   } else {
     locale.value = key
-    localStorage.setItem('toolbox_locale', key)
+    try { localStorage.setItem('toolbox_locale', key) } catch { /* 存储被禁时只影响下次启动语言 */ }
   }
 }
 
