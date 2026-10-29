@@ -1,22 +1,26 @@
 <template>
   <div class="rename-tool">
     <!-- Upload -->
-    <div v-if="!files.length" class="upload-area"
-      @click="triggerFile"
-      @drop.prevent="onDrop"
-      @dragover.prevent="dragover = true"
-      @dragleave.prevent="dragover = false"
-      :class="{ dragover }">
-      <input type="file" ref="fileInput" multiple @change="onFileSelect" hidden>
-      <div class="upload-inner">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/>
-          <line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-        <p class="upload-title">{{ parsing ? '正在解析 zip，请稍候…' : '点击或拖拽文件到此处' }}</p>
-        <p class="upload-hint">支持多选，.zip 会展开成内部的文件和文件夹，不会上传服务器</p>
+    <div v-if="!files.length">
+      <div class="upload-area"
+        @click="triggerFile"
+        @drop.prevent="onDrop"
+        @dragover.prevent="dragover = true"
+        @dragleave.prevent="dragover = false"
+        :class="{ dragover }">
+        <input type="file" ref="fileInput" multiple @change="onFileSelect" hidden>
+        <div class="upload-inner">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <p class="upload-title">{{ parsing ? '正在解析，请稍候…' : '点击或拖拽文件到此处' }}</p>
+          <p class="upload-hint">支持多选；.zip 会展开，也可直接上传文件夹；不会上传服务器</p>
+        </div>
       </div>
+      <button class="btn-secondary folder-upload-btn" @click="triggerFolder">📂 上传文件夹</button>
+      <input type="file" ref="folderInput" webkitdirectory @change="onFolderSelect" hidden>
     </div>
 
     <!-- Editor -->
@@ -78,7 +82,7 @@
         </div>
         <div v-for="(item, i) in files" :key="i" class="file-row" :class="{ changed: item.oldName !== item.newName }">
           <span class="col-num">{{ i + 1 }}</span>
-          <span class="col-kind">{{ item.kind === 'dir' ? '📁' : item.kind === 'zip' ? '🗜️' : '📄' }}</span>
+          <span class="col-kind">{{ item.kind === 'dir' ? '📁' : item.kind === 'zip' ? '🗜️' : item.kind === 'folder' ? '📂' : '📄' }}</span>
           <span class="col-old" :title="item.oldName">{{ item.oldName }}</span>
           <span class="col-arrow">→</span>
           <input v-model="item.newName" type="text" class="col-new-input" @change="onNameEdited(item)">
@@ -105,6 +109,7 @@
 import { ref } from 'vue'
 
 const fileInput = ref(null)
+const folderInput = ref(null)
 const dragover = ref(false)
 const files = ref([])
 const downloading = ref(false)
@@ -136,13 +141,114 @@ function triggerFile() {
   fileInput.value?.click()
 }
 
+function triggerFolder() {
+  folderInput.value?.click()
+}
+
 function onFileSelect(e) {
   handleFiles(e.target.files)
 }
 
-function onDrop(e) {
+function onFolderSelect(e) {
+  const list = Array.from(e.target.files || [])
+  folderInput.value && (folderInput.value.value = '')
+  if (!list.length) return
+  addFolderFiles(list)
+}
+
+// 文件夹选择框的文件带 webkitRelativePath（如 photos/img/a.jpg），按顶层目录分组
+function addFolderFiles(list) {
+  const groups = new Map()
+  const loose = []
+  for (const f of list) {
+    const rel = f.webkitRelativePath || f.name
+    const slash = rel.indexOf('/')
+    if (slash === -1) {
+      loose.push(regularItem(f))
+    } else {
+      const root = rel.slice(0, slash)
+      if (!groups.has(root)) groups.set(root, [])
+      groups.get(root).push({ path: rel, isDir: false, file: f, zipEntry: null })
+    }
+  }
+  for (const [root, entries] of groups) {
+    files.value.push(...expandFolder(entries, root))
+  }
+  if (loose.length) files.value.push(...loose)
+}
+
+function entryToFile(entry) {
+  return new Promise((resolve, reject) => entry.file(resolve, reject))
+}
+
+async function readAllEntries(dirEntry) {
+  const reader = dirEntry.createReader()
+  const out = []
+  for (;;) {
+    const batch = await new Promise((resolve, reject) => reader.readEntries(resolve, reject))
+    if (!batch.length) break
+    out.push(...batch)
+  }
+  return out
+}
+
+async function collectEntry(entry, prefix, out) {
+  const path = prefix ? prefix + '/' + entry.name : entry.name
+  if (entry.isFile) {
+    out.push({ path, isDir: false, file: await entryToFile(entry), zipEntry: null })
+  } else if (entry.isDirectory) {
+    out.push({ path, isDir: true, file: null, zipEntry: null })
+    for (const child of await readAllEntries(entry)) {
+      await collectEntry(child, path, out)
+    }
+  }
+}
+
+async function onDrop(e) {
   dragover.value = false
-  handleFiles(e.dataTransfer.files)
+  const dt = e.dataTransfer
+  const items = dt ? Array.from(dt.items || []) : []
+  const entries = []
+  for (const it of items) {
+    const en = typeof it.webkitGetAsEntry === 'function' ? it.webkitGetAsEntry() : null
+    if (en) entries.push(en)
+  }
+  if (entries.length) {
+    parsing.value = true
+    try {
+      const dropped = []
+      for (const en of entries) await collectEntry(en, '', dropped)
+      addDroppedEntries(dropped)
+    } finally {
+      parsing.value = false
+    }
+    return
+  }
+  handleFiles(dt.files)
+}
+
+// 拖入内容按顶层目录分组；单段目录（空文件夹）只有容器行
+function addDroppedEntries(dropped) {
+  const groups = new Map()
+  const loose = []
+  for (const d of dropped) {
+    const slash = d.path.indexOf('/')
+    if (slash === -1) {
+      if (d.isDir) {
+        if (!groups.has(d.path)) groups.set(d.path, [])
+      } else {
+        loose.push(regularItem(d.file))
+      }
+    } else {
+      const root = d.path.slice(0, slash)
+      if (!groups.has(root)) groups.set(root, [])
+      groups.get(root).push(d)
+    }
+  }
+  for (const [root, entries] of groups) {
+    files.value.push(...expandFolder(entries, root))
+  }
+  if (loose.length) files.value.push(...loose)
 }
 
 let jszipPromise = null
@@ -165,45 +271,57 @@ function regularItem(f) {
   return { kind: 'file', source: 'upload', file: f, zipEntry: null, zipId: 0, oldName: f.name, newName: f.name, ext, base, dir: '', _appliedName: f.name }
 }
 
-async function expandZip(f) {
-  const JSZipCtor = await getJSZip()
-  const zip = await JSZipCtor.loadAsync(await f.arrayBuffer())
-  const zipId = ++zipSeq
-  const { base, ext } = splitName(f.name)
-  const items = [{ kind: 'zip', source: 'zip', file: f, zipEntry: null, zipId, oldName: f.name, newName: f.name, ext, base, dir: '', _appliedName: f.name }]
-
-  // 先收集全部条目，再补推断出的中间目录行（zip 常省略目录条目）
-  const entries = []
-  zip.forEach((path, entry) => entries.push({ path, entry }))
+// 共享的包内行构建：entries 为 [{ path, isDir, file, zipEntry }]，path 不带末尾 '/'；
+// minDepth 为开始补目录行的深度（zip 为 1；文件夹为 2，根目录本身由容器行代表）。
+// 目录行会为缺失的中间目录补齐（zip 常省略目录条目），已有的不重复。
+function buildPackageRows(groupId, entries, minDepth, source) {
   const seenDirs = new Set()
   const rows = []
-  for (const { path, entry } of entries) {
+  for (const { path, isDir, file, zipEntry } of entries) {
     const clean = path.replace(/\/$/, '')
     if (!clean) continue
     const parts = clean.split('/')
-    // 补祖先目录行
-    for (let d = 1; d < parts.length; d++) {
+    for (let d = minDepth; d < parts.length; d++) {
       const dirPath = parts.slice(0, d).join('/')
       if (!seenDirs.has(dirPath)) {
         seenDirs.add(dirPath)
         const parent = parts.slice(0, d - 1).join('/')
-        rows.push({ kind: 'dir', source: 'zip', file: null, zipEntry: null, zipId, oldName: dirPath, newName: dirPath, ext: '', base: parts[d - 1], dir: parent ? parent + '/' : '', _appliedName: dirPath })
+        rows.push({ kind: 'dir', source, file: null, zipEntry: null, zipId: groupId, oldName: dirPath, newName: dirPath, ext: '', base: parts[d - 1], dir: parent ? parent + '/' : '', _appliedName: dirPath })
       }
     }
-    if (entry.dir) {
+    if (isDir) {
       if (!seenDirs.has(clean)) {
         seenDirs.add(clean)
         const parent = parts.slice(0, -1).join('/')
-        rows.push({ kind: 'dir', source: 'zip', file: null, zipEntry: null, zipId, oldName: clean, newName: clean, ext: '', base: parts[parts.length - 1], dir: parent ? parent + '/' : '', _appliedName: clean })
+        rows.push({ kind: 'dir', source, file: null, zipEntry: null, zipId: groupId, oldName: clean, newName: clean, ext: '', base: parts[parts.length - 1], dir: parent ? parent + '/' : '', _appliedName: clean })
       }
       continue
     }
     const parent = parts.slice(0, -1).join('/')
     const { base: b, ext: e } = splitName(parts[parts.length - 1])
-    rows.push({ kind: 'file', source: 'zip', file: null, zipEntry: entry, zipId, oldName: clean, newName: clean, ext: e, base: b, dir: parent ? parent + '/' : '', _appliedName: clean })
+    rows.push({ kind: 'file', source, file: file || null, zipEntry: zipEntry || null, zipId: groupId, oldName: clean, newName: clean, ext: e, base: b, dir: parent ? parent + '/' : '', _appliedName: clean })
   }
-  items.push(...rows)
-  return items
+  return rows
+}
+
+async function expandZip(f) {
+  const JSZipCtor = await getJSZip()
+  const zip = await JSZipCtor.loadAsync(await f.arrayBuffer())
+  const zipId = ++zipSeq
+  const { base, ext } = splitName(f.name)
+  const container = { kind: 'zip', source: 'zip', file: f, zipEntry: null, zipId, oldName: f.name, newName: f.name, ext, base, dir: '', _appliedName: f.name }
+  const entries = []
+  zip.forEach((path, entry) => entries.push({ path, isDir: entry.dir, file: null, zipEntry: entry }))
+  return [container, ...buildPackageRows(zipId, entries, 1, 'zip')]
+}
+
+// 文件夹上传：条目路径带根目录前缀（如 photos/img/a.jpg），根目录本身由容器行代表。
+// 容器行即输出包名（下载时自动补 .zip 后缀）；内部路径以根目录名为前缀，改容器名即改前缀。
+function expandFolder(entries, rootName) {
+  const zipId = ++zipSeq
+  const container = { kind: 'folder', source: 'folder', file: null, zipEntry: null, zipId, oldName: rootName, newName: rootName, ext: '', base: rootName, dir: '', _appliedName: rootName }
+  const rest = entries.filter(en => en.path !== rootName)
+  return [container, ...buildPackageRows(zipId, rest, 2, 'folder')]
 }
 
 async function handleFiles(fileList) {
@@ -231,9 +349,9 @@ async function handleFiles(fileList) {
   }
 }
 
-// 文件夹改名后，同一 zip 内名字以旧路径开头的条目跟着换前缀（改完输入框、失焦/回车时触发）
+// 文件夹/包容器改名后，同一包内名字以旧路径开头的条目跟着换前缀（改完输入框、失焦/回车时触发）
 function onNameEdited(item) {
-  if (item.kind !== 'dir') return
+  if (item.kind !== 'dir' && item.kind !== 'folder') return
   const prev = item._appliedName ?? item.oldName
   const next = item.newName.replace(/\/+$/, '')
   item.newName = next
@@ -264,10 +382,10 @@ function applyRules() {
     }
     segName.set(item, name + item.ext)
   })
-  // 2. 文件夹路径重映射：浅层先算，子目录继承已改名的父路径
+  // 2. 文件夹路径重映射：浅层先算，子目录继承已改名的父路径（包容器按一层目录算）
   const dirMap = new Map()
   const dirItems = files.value
-    .filter(it => it.kind === 'dir')
+    .filter(it => it.kind === 'dir' || it.kind === 'folder')
     .sort((a, b) => a.oldName.split('/').length - b.oldName.split('/').length)
   for (const d of dirItems) {
     const parts = d.oldName.split('/')
@@ -277,10 +395,10 @@ function applyRules() {
   }
   // 3. 合成完整新路径
   files.value.forEach(item => {
-    if (item.kind === 'dir') {
+    if (item.kind === 'dir' || item.kind === 'folder') {
       item.newName = dirMap.get(item.oldName)
       item._appliedName = item.newName
-    } else if (item.source === 'zip') {
+    } else if (item.source === 'zip' || item.source === 'folder') {
       const parentOld = item.dir ? item.dir.replace(/\/$/, '') : ''
       const parentNew = parentOld ? (dirMap.get(parentOld) ?? parentOld) : ''
       item.newName = parentNew ? parentNew + '/' + segName.get(item) : segName.get(item)
@@ -300,6 +418,7 @@ function resetNames() {
 function clearAll() {
   files.value = []
   fileInput.value && (fileInput.value.value = '')
+  folderInput.value && (folderInput.value.value = '')
 }
 
 function downloadBlob(blob, name) {
@@ -321,11 +440,16 @@ async function downloadZipGroup(container) {
     if (it.kind === 'dir') {
       zip.folder(target)
     } else {
-      zip.file(target, await it.zipEntry.async('uint8array'))
+      const data = it.zipEntry ? await it.zipEntry.async('uint8array') : await it.file.arrayBuffer()
+      zip.file(target, data)
     }
   }
   const blob = await zip.generateAsync({ type: 'blob' })
-  downloadBlob(blob, container.newName)
+  // 文件夹上传的包名自动补 .zip 后缀；zip 上传的包名按行内名字原样
+  const outName = container.kind === 'folder' && !/\.zip$/i.test(container.newName)
+    ? container.newName + '.zip'
+    : container.newName
+  downloadBlob(blob, outName)
 }
 
 async function downloadAll() {
@@ -333,13 +457,13 @@ async function downloadAll() {
   downloading.value = true
   try {
     for (const item of files.value) {
-      if (item.kind === 'zip') {
+      if (item.kind === 'zip' || item.kind === 'folder') {
         await downloadZipGroup(item)
       } else if (item.source === 'upload') {
         downloadBlob(item.file, item.newName)
         await sleep(200)
       }
-      // zip 内部条目随所属的包一起打出，此处跳过
+      // 包内条目随所属的包一起打出，此处跳过
     }
   } catch (e) {
     alert(`下载失败：${e.message || e}`)
@@ -353,9 +477,9 @@ function sleep(ms) {
 }
 
 function copyScript() {
-  // 批处理脚本只对本地真实文件有意义，zip 内部条目不参与
+  // 批处理脚本只对本地真实文件有意义，包内条目不参与
   const lines = files.value
-    .filter(f => f.source !== 'zip')
+    .filter(f => f.source === 'upload')
     .map(f => `Rename-Item -Path "${f.oldName}" -NewName "${f.newName}"`)
   if (!lines.length) {
     alert('列表中没有本地文件，无法生成脚本')
@@ -485,6 +609,7 @@ function copyScript() {
   text-align: center;
   font-size: 0.8125rem;
 }
+.folder-upload-btn { margin-top: 12px; width: 100%; }
 .col-old, .col-new-input {
   overflow: hidden;
   text-overflow: ellipsis;
