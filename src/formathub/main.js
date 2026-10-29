@@ -95,7 +95,7 @@ function loadScript(url) {
     const s = document.createElement('script');
     s.src = url;
     s.onload = () => { loadedLibs.add(url); resolve(); };
-    s.onerror = () => reject(new Error('Failed to load ' + url));
+    s.onerror = () => { delete loadingPromises[url]; reject(new Error('Failed to load ' + url)); };
     document.head.appendChild(s);
   });
 

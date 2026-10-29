@@ -25,7 +25,7 @@
             const s = document.createElement('script');
             s.src = url;
             s.onload = () => { this.loaded.add(url); this.loading.delete(url); resolve(); };
-            s.onerror = () => reject(new Error('Failed to load ' + url));
+            s.onerror = () => { this.loading.delete(url); reject(new Error('Failed to load ' + url)); };
             document.head.appendChild(s);
           });
           this.loading.set(url, promise);
