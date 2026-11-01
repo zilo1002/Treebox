@@ -487,7 +487,7 @@ async function renderCategoryPage(catId) {
     archiveHtml = '<div class="rounded-2xl bg-slate-800/20 border border-emerald-500/20 p-4 sm:p-5 space-y-3">' +
       '<div>' +
         '<h3 class="text-sm font-semibold text-slate-200">' + (isEn ? 'Compress / Extract' : '压缩 / 解压缩') + '</h3>' +
-        '<p class="text-[11px] text-slate-400 mt-0.5">' + (isEn ? 'Any file type can be packed here, not just data files. Add files, then pack them into a ZIP, or add a ZIP to extract it. Whole folders can be added too; their paths are kept in the ZIP.' : '这里什么格式都能打包，不只限数据文件。先把文件加进来，再打包成 ZIP；加进来的是 ZIP 也可以直接解压。也可以直接添加整个文件夹，打包后保持原有路径。') + '</p>' +
+        '<p class="text-[11px] text-slate-400 mt-0.5">' + (isEn ? 'Any file type can be packed here, not just data files. Add files, then pack them into a ZIP, or add a ZIP to extract it. Whole folders can be added too; their paths are kept in the ZIP. A single folder packs under its own name; packing several files asks you for a name.' : '这里什么格式都能打包，不只限数据文件。先把文件加进来，再打包成 ZIP；加进来的是 ZIP 也可以直接解压。也可以直接添加整个文件夹，打包后保持原有路径。单个文件夹打包用文件夹名；多个文件打包时会请你起名。') + '</p>' +
       '</div>' +
       '<div id="archiveDropZone" class="group relative border-2 border-dashed border-slate-600 rounded-2xl bg-slate-800/20 p-6 text-center cursor-pointer">' +
         '<input type="file" id="archiveFileInput" multiple accept="*/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">' +
@@ -1548,10 +1548,41 @@ function renderArchiveList() {
 window.removeArchiveFile = function(idx) { archiveFiles.splice(idx, 1); renderArchiveList(); };
 window.clearArchiveFiles = function() { archiveFiles = []; renderArchiveList(); };
 
+// 打包文件名：单个文件夹用文件夹本身的名字；单个散文件用文件名（去扩展名）；多个条目请用户起名
+function archiveZipName() {
+  const isEn = getLang() === 'en';
+  const roots = new Set();
+  for (const e of archiveFiles) {
+    const seg = (e.path || '').split('/')[0];
+    if (seg) roots.add(seg);
+  }
+  if (roots.size === 1) {
+    const root = [...roots][0];
+    const hasDirMarker = archiveFiles.some(e => e.isDir && e.path === root);
+    const hasNested = archiveFiles.some(e => e.path.startsWith(root + '/'));
+    if (hasDirMarker || hasNested) return root + '.zip';
+    const files = archiveFiles.filter(e => !e.isDir);
+    if (files.length === 1) {
+      const name = files[0].path;
+      const dot = name.lastIndexOf('.');
+      const base = dot > 0 ? name.slice(0, dot) : name;
+      return base + '.zip';
+    }
+  }
+  const input = window.prompt(isEn ? 'Name for the ZIP file' : '给打包文件起个名字', 'treebox-archive');
+  if (input === null) return null;
+  let name = (input || '').trim().replace(/[\\/]+/g, '_');
+  if (!name) name = 'treebox-archive';
+  if (!/\.zip$/i.test(name)) name += '.zip';
+  return name;
+}
+
 window.packArchiveFiles = async function() {
   const isEn = getLang() === 'en';
   if (!archiveFiles.length) { toast('⚠️', isEn ? 'Add some files first' : '先添加几个文件再打包'); return; }
   if (typeof JSZip === 'undefined') { toast('❌', isEn ? 'ZIP library not loaded yet' : '压缩库还没加载好，稍等一下再试'); return; }
+  const zipName = archiveZipName();
+  if (!zipName) return; // 用户取消了起名
   try {
     const zip = new JSZip();
     const used = new Set();
@@ -1577,7 +1608,7 @@ window.packArchiveFiles = async function() {
       count++;
     }
     const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
-    dlBlob(blob, 'treebox-archive.zip');
+    dlBlob(blob, zipName);
     toast('✅', (isEn ? 'Packed ' : '已打包 ') + count + (isEn ? ' files' : ' 个文件'));
   } catch (err) {
     toast('❌', (err && err.message) || (isEn ? 'Pack failed' : '打包失败'));
