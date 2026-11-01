@@ -30,7 +30,7 @@ let pdfToolFiles = [];
 let pdfOpts = { range: '', watermarkText: '', fontSize: 36, opacity: 0.3, position: 'center', rotation: -30, password: '' };
 let pdfResult = null; // { blob, name, info }
 let pdfPageCounts = new Map(); // File -> 页数(number) | 'loading' | 'unknown'
-let archiveFiles = []; // 下方压缩/解压缩小窗里的任意格式文件
+let archiveFiles = []; // 下方压缩/解压缩小窗里的条目：{ file, path, isDir }，path 为包内路径（散文件即文件名）
 let githubPlatform = 'github'; // 'github' | 'gitee'
 let releaseAssets = [];
 
@@ -487,10 +487,11 @@ async function renderCategoryPage(catId) {
     archiveHtml = '<div class="rounded-2xl bg-slate-800/20 border border-emerald-500/20 p-4 sm:p-5 space-y-3">' +
       '<div>' +
         '<h3 class="text-sm font-semibold text-slate-200">' + (isEn ? 'Compress / Extract' : '压缩 / 解压缩') + '</h3>' +
-        '<p class="text-[11px] text-slate-400 mt-0.5">' + (isEn ? 'Any file type can be packed here, not just data files. Add files, then pack them into a ZIP, or add a ZIP to extract it.' : '这里什么格式都能打包，不只限数据文件。先把文件加进来，再打包成 ZIP；加进来的是 ZIP 也可以直接解压。') + '</p>' +
+        '<p class="text-[11px] text-slate-400 mt-0.5">' + (isEn ? 'Any file type can be packed here, not just data files. Add files, then pack them into a ZIP, or add a ZIP to extract it. Whole folders can be added too; their paths are kept in the ZIP.' : '这里什么格式都能打包，不只限数据文件。先把文件加进来，再打包成 ZIP；加进来的是 ZIP 也可以直接解压。也可以直接添加整个文件夹，打包后保持原有路径。') + '</p>' +
       '</div>' +
       '<div id="archiveDropZone" class="group relative border-2 border-dashed border-slate-600 rounded-2xl bg-slate-800/20 p-6 text-center cursor-pointer">' +
         '<input type="file" id="archiveFileInput" multiple accept="*/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">' +
+        '<input type="file" id="archiveFolderInput" webkitdirectory multiple hidden>' +
         '<div class="relative z-0 pointer-events-none">' +
           '<h3 class="text-sm font-semibold mb-1">' + t('clickOrDrag') + '</h3>' +
           '<p class="text-slate-400 text-[11px]">' + (isEn ? 'Any format · ' : '任意格式 · ') + t('maxSize') + '</p>' +
@@ -505,6 +506,7 @@ async function renderCategoryPage(catId) {
         '<button onclick="window.packArchiveFiles()" class="py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm font-medium">' + (isEn ? 'Pack as ZIP' : '打包成 ZIP') + '</button>' +
         '<button onclick="window.extractArchiveFile()" class="py-2.5 rounded-xl bg-slate-800 border border-slate-600 text-slate-300 text-sm font-medium">' + (isEn ? 'Extract ZIP' : '解压 ZIP') + '</button>' +
       '</div>' +
+      '<button onclick="window.addArchiveFolder()" class="w-full py-2.5 rounded-xl bg-slate-800 border border-slate-600 text-slate-300 text-sm font-medium">' + (isEn ? '📂 Add folder' : '📂 添加文件夹') + '</button>' +
       '<button onclick="window.clearArchiveFiles()" class="w-full py-2 rounded-xl bg-slate-800/50 border border-slate-700 text-slate-400 text-xs font-medium">' + (isEn ? 'Clear list' : '清空列表') + '</button>' +
     '</div>';
   }
@@ -663,10 +665,12 @@ function bindCategoryEvents(catId) {
     const az = document.getElementById('archiveDropZone');
     const ai = document.getElementById('archiveFileInput');
     if (ai) ai.addEventListener('change', e => { addArchiveFiles(e.target.files); e.target.value = ''; });
+    const afi = document.getElementById('archiveFolderInput');
+    if (afi) afi.addEventListener('change', e => { addArchiveFolderFiles(e.target.files); e.target.value = ''; });
     if (az) {
       az.addEventListener('dragover', e => { e.preventDefault(); az.classList.add('drop-active'); });
       az.addEventListener('dragleave', () => az.classList.remove('drop-active'));
-      az.addEventListener('drop', e => { e.preventDefault(); az.classList.remove('drop-active'); addArchiveFiles(e.dataTransfer.files); });
+      az.addEventListener('drop', e => { e.preventDefault(); az.classList.remove('drop-active'); dropArchiveFiles(e.dataTransfer); });
     }
     renderArchiveList();
   }
@@ -1426,26 +1430,119 @@ window.startFormatJSON = async function(mode) {
 function addArchiveFiles(fileList) {
   Array.from(fileList || []).forEach(f => {
     if (f.size > MAX_SIZE) { toast('⚠️', '「' + f.name + '」' + t('maxSize')); return; }
-    archiveFiles.push(f);
+    archiveFiles.push({ file: f, path: f.name, isDir: false });
   });
   renderArchiveList();
 }
+
+// 文件夹来源的条目（选择器/拖入）：path 已带文件夹前缀，空目录以 isDir 标记保留
+function addArchiveEntries(entries) {
+  for (const en of entries || []) {
+    if (!en.isDir && en.file && en.file.size > MAX_SIZE) { toast('⚠️', '「' + en.file.name + '」' + t('maxSize')); continue; }
+    archiveFiles.push({ file: en.isDir ? null : en.file, path: en.path, isDir: !!en.isDir });
+  }
+  renderArchiveList();
+}
+
+// 文件夹选择框的文件带 webkitRelativePath（如 photos/img/a.jpg），没有就是回退到了选文件模式
+function addArchiveFolderFiles(fileList) {
+  const list = Array.from(fileList || []);
+  if (!list.length) return;
+  addArchiveEntries(list.map(f => ({ path: f.webkitRelativePath || f.name, isDir: false, file: f })));
+  if (!list.some(f => f.webkitRelativePath && f.webkitRelativePath.includes('/'))) {
+    const isEn = getLang() === 'en';
+    alert(isEn ? 'This device cannot pick folders; files were added flat. To keep the folder structure, zip the folder first, then add the ZIP.' : '这台设备选不了文件夹，已按散文件加入；要保留文件夹结构，请先把文件夹打成 zip 再上传');
+  }
+}
+
+function archiveEntryToFile(entry) {
+  return new Promise((resolve, reject) => entry.file(resolve, reject));
+}
+
+async function readArchiveEntries(dirEntry) {
+  const reader = dirEntry.createReader();
+  const out = [];
+  for (;;) {
+    const batch = await new Promise((resolve, reject) => reader.readEntries(resolve, reject));
+    if (!batch.length) break;
+    out.push(...batch);
+  }
+  return out;
+}
+
+async function collectArchiveEntry(entry, prefix, out) {
+  const path = prefix ? prefix + '/' + entry.name : entry.name;
+  if (entry.isFile) {
+    out.push({ path, isDir: false, file: await archiveEntryToFile(entry) });
+  } else if (entry.isDirectory) {
+    out.push({ path, isDir: true, file: null });
+    for (const child of await readArchiveEntries(entry)) {
+      await collectArchiveEntry(child, path, out);
+    }
+  }
+}
+
+async function collectArchiveHandle(handle, prefix, out) {
+  const path = prefix ? prefix + '/' + handle.name : handle.name;
+  if (handle.kind === 'file') {
+    out.push({ path, isDir: false, file: await handle.getFile() });
+  } else {
+    out.push({ path, isDir: true, file: null });
+    for await (const child of handle.values()) {
+      await collectArchiveHandle(child, path, out);
+    }
+  }
+}
+
+async function dropArchiveFiles(dt) {
+  const items = dt ? Array.from(dt.items || []) : [];
+  const entries = [];
+  for (const it of items) {
+    const en = typeof it.webkitGetAsEntry === 'function' ? it.webkitGetAsEntry() : null;
+    if (en) entries.push(en);
+  }
+  if (entries.length) {
+    const dropped = [];
+    for (const en of entries) await collectArchiveEntry(en, '', dropped);
+    addArchiveEntries(dropped);
+    return;
+  }
+  addArchiveFiles(dt.files);
+}
+
+window.addArchiveFolder = async function() {
+  // 优先用系统文件夹选择器（File System Access API）：部分手机浏览器不认 webkitdirectory 选择框，却认这个
+  if (typeof window.showDirectoryPicker === 'function') {
+    try {
+      const handle = await window.showDirectoryPicker();
+      const dropped = [];
+      await collectArchiveHandle(handle, '', dropped);
+      addArchiveEntries(dropped);
+      return;
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;
+    }
+  }
+  const fi = document.getElementById('archiveFolderInput');
+  if (fi) fi.click();
+};
 
 function renderArchiveList() {
   const el = document.getElementById('archiveFileList');
   if (!el) return;
   if (!archiveFiles.length) { el.innerHTML = ''; return; }
   const isEn = getLang() === 'en';
-  const total = archiveFiles.reduce((a, f) => a + f.size, 0);
-  el.innerHTML = archiveFiles.map((f, idx) =>
+  const fileCount = archiveFiles.filter(e => !e.isDir).length;
+  const total = archiveFiles.reduce((a, e) => a + (e.file ? e.file.size : 0), 0);
+  el.innerHTML = archiveFiles.map((e, idx) =>
     '<div class="flex items-center gap-2 p-3 rounded-xl bg-slate-800/30 border border-slate-700/30">' +
       '<span class="text-xs text-slate-400 w-6">' + (idx + 1) + '.</span>' +
-      '<span class="flex-1 text-xs text-slate-200 truncate">' + f.name + '</span>' +
-      (/\.zip$/i.test(f.name) ? '<span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">ZIP</span>' : '') +
-      '<span class="text-[10px] text-slate-500">' + fmtSize(f.size) + '</span>' +
+      '<span class="flex-1 text-xs text-slate-200 truncate">' + (e.isDir ? '📁 ' : '') + e.path + '</span>' +
+      (!e.isDir && /\.zip$/i.test(e.path) ? '<span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">ZIP</span>' : '') +
+      '<span class="text-[10px] text-slate-500">' + (e.isDir ? (isEn ? 'folder' : '文件夹') : fmtSize(e.file.size)) + '</span>' +
       '<button onclick="window.removeArchiveFile(' + idx + ')" class="text-xs px-2 py-1 rounded bg-slate-700 text-slate-300">' + t('remove') + '</button>' +
     '</div>'
-  ).join('') + '<p class="text-[11px] text-slate-400 px-1">' + (isEn ? archiveFiles.length + ' files · ' + fmtSize(total) + ' total' : '共 ' + archiveFiles.length + ' 个文件 · 合计 ' + fmtSize(total)) + '</p>';
+  ).join('') + '<p class="text-[11px] text-slate-400 px-1">' + (isEn ? fileCount + ' files · ' + fmtSize(total) + ' total' : '共 ' + fileCount + ' 个文件 · 合计 ' + fmtSize(total)) + '</p>';
 }
 
 window.removeArchiveFile = function(idx) { archiveFiles.splice(idx, 1); renderArchiveList(); };
@@ -1458,22 +1555,30 @@ window.packArchiveFiles = async function() {
   try {
     const zip = new JSZip();
     const used = new Set();
-    for (const f of archiveFiles) {
-      let name = f.name.split('/').pop() || 'file';
-      if (used.has(name)) {
-        const dot = name.lastIndexOf('.');
-        const base = dot > 0 ? name.slice(0, dot) : name;
-        const ext = dot > 0 ? name.slice(dot) : '';
+    let count = 0;
+    for (const e of archiveFiles) {
+      const name = (e.path || 'file').replace(/^\/+/, '');
+      if (!name) continue;
+      if (e.isDir) { zip.folder(name); continue; }
+      let entryName = name;
+      if (used.has(entryName)) {
+        // 后缀只看最后一个斜杠之后的部分，避免目录里的点被当成扩展名
+        const slash = entryName.lastIndexOf('/');
+        const dot = entryName.lastIndexOf('.');
+        const hasExt = dot > slash;
+        const base = hasExt ? entryName.slice(0, dot) : entryName;
+        const ext = hasExt ? entryName.slice(dot) : '';
         let n = 1;
         while (used.has(base + ' (' + n + ')' + ext)) n++;
-        name = base + ' (' + n + ')' + ext;
+        entryName = base + ' (' + n + ')' + ext;
       }
-      used.add(name);
-      zip.file(name, f);
+      used.add(entryName);
+      zip.file(entryName, e.file);
+      count++;
     }
     const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
     dlBlob(blob, 'treebox-archive.zip');
-    toast('✅', (isEn ? 'Packed ' : '已打包 ') + archiveFiles.length + (isEn ? ' files' : ' 个文件'));
+    toast('✅', (isEn ? 'Packed ' : '已打包 ') + count + (isEn ? ' files' : ' 个文件'));
   } catch (err) {
     toast('❌', (err && err.message) || (isEn ? 'Pack failed' : '打包失败'));
   }
@@ -1481,8 +1586,9 @@ window.packArchiveFiles = async function() {
 
 window.extractArchiveFile = async function() {
   const isEn = getLang() === 'en';
-  const zipFile = archiveFiles.find(f => /\.zip$/i.test(f.name));
-  if (!zipFile) { toast('⚠️', isEn ? 'Add a ZIP file first' : '列表里还没有 ZIP，先添加一个 ZIP 文件'); return; }
+  const zipEntry = archiveFiles.find(e => !e.isDir && /\.zip$/i.test(e.path));
+  if (!zipEntry) { toast('⚠️', isEn ? 'Add a ZIP file first' : '列表里还没有 ZIP，先添加一个 ZIP 文件'); return; }
+  const zipFile = zipEntry.file;
   const pwEl = document.getElementById('archivePassword');
   const password = pwEl ? pwEl.value : '';
   try {
