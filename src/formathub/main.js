@@ -31,6 +31,7 @@ let pdfOpts = { range: '', watermarkText: '', fontSize: 36, opacity: 0.3, positi
 let pdfResult = null; // { blob, name, info }
 let pdfPageCounts = new Map(); // File -> 页数(number) | 'loading' | 'unknown'
 let archiveFiles = []; // 下方压缩/解压缩小窗里的条目：{ file, path, isDir }，path 为包内路径（散文件即文件名）
+let dracoFile = null; // 3D 模型压缩区选中的单个模型文件（.glb/.gltf）
 let githubPlatform = 'github'; // 'github' | 'gitee'
 let releaseAssets = [];
 
@@ -517,6 +518,31 @@ async function renderCategoryPage(catId) {
     '</div>';
   }
 
+  // 3D 模型压缩（Draco）：放在压缩/解压缩小窗下面
+  let dracoHtml = '';
+  if (catId === 'data') {
+    dracoHtml = '<div class="rounded-2xl bg-slate-800/20 border border-violet-500/20 p-4 sm:p-5 space-y-3">' +
+      '<div>' +
+        '<h3 class="text-sm font-semibold text-slate-200">' + (isEn ? '3D Model Compression' : '3D 模型压缩') + '</h3>' +
+        '<p class="text-[11px] text-slate-400 mt-0.5">' + (isEn ? 'Draco compresses mesh geometry — skeleton and animations are kept. Lossy: vertex positions are quantized, visually near-identical. Textures and animation data are not compressed. Output is a .glb, and the receiver must support Draco to open it.' : 'Draco 压的是网格几何，骨骼和动画都保留；有损（顶点位置量化），肉眼基本看不出来；贴图和动画数据不压。输出还是 .glb，对方要支持 Draco 才读得了。') + '</p>' +
+      '</div>' +
+      '<div id="dracoDropZone" class="group relative border-2 border-dashed border-slate-600 rounded-2xl bg-slate-800/20 p-6 text-center cursor-pointer">' +
+        '<input type="file" id="dracoFileInput" accept=".glb,.gltf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">' +
+        '<div class="relative z-0 pointer-events-none">' +
+          '<h3 class="text-sm font-semibold mb-1">' + t('clickOrDrag') + '</h3>' +
+          '<p class="text-slate-400 text-[11px]">GLB / GLTF · ' + t('maxSize') + '</p>' +
+        '</div>' +
+      '</div>' +
+      '<div id="dracoFileRow" class="space-y-2"></div>' +
+      '<div class="flex items-center gap-2">' +
+        '<span class="text-[10px] text-slate-500 shrink-0">' + (isEn ? 'Precision' : '精度') + ':</span>' +
+        '<input type="number" id="dracoLevel" min="1" max="9" step="1" value="6" class="w-16 bg-slate-900/50 border border-slate-700 rounded-md px-2 py-1.5 text-[11px] text-slate-300 focus:outline-none">' +
+        '<span class="text-[10px] text-slate-500">' + (isEn ? '1–9, higher = finer but bigger (default 6)' : '1–9，越大越精细、文件越大（默认 6）') + '</span>' +
+      '</div>' +
+      '<button id="dracoCompressBtn" onclick="window.compressDracoModel()" class="w-full py-2.5 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-400 text-sm font-medium disabled:opacity-50">' + (isEn ? '🗜️ Compress Model' : '🗜️ 压缩模型') + '</button>' +
+    '</div>';
+  }
+
   // JSON 格式化按钮
   let formatBtn = '';
   if (catId === 'data') {
@@ -634,6 +660,7 @@ async function renderCategoryPage(catId) {
       '</div>'+
       '</div>'+
       archiveHtml +
+      dracoHtml +
     '</main>'+
   '</div>'+
   '<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">'+
@@ -679,6 +706,16 @@ function bindCategoryEvents(catId) {
       az.addEventListener('drop', e => { e.preventDefault(); az.classList.remove('drop-active'); dropArchiveFiles(e.dataTransfer); });
     }
     renderArchiveList();
+
+    const dz2 = document.getElementById('dracoDropZone');
+    const di = document.getElementById('dracoFileInput');
+    if (di) di.addEventListener('change', e => { setDracoFile(e.target.files && e.target.files[0]); e.target.value = ''; });
+    if (dz2) {
+      dz2.addEventListener('dragover', e => { e.preventDefault(); dz2.classList.add('drop-active'); });
+      dz2.addEventListener('dragleave', () => dz2.classList.remove('drop-active'));
+      dz2.addEventListener('drop', e => { e.preventDefault(); dz2.classList.remove('drop-active'); setDracoFile(e.dataTransfer.files && e.dataTransfer.files[0]); });
+    }
+    renderDracoFile();
   }
 
   const cm = document.getElementById('closeModal');
@@ -1665,6 +1702,81 @@ window.extractArchiveFile = async function() {
     } else {
       toast('❌', (err && err.message) || (isEn ? 'Extract failed' : '解压失败'));
     }
+  }
+};
+
+function renderDracoFile() {
+  const row = document.getElementById('dracoFileRow');
+  if (!row) return;
+  if (!dracoFile) { row.innerHTML = ''; return; }
+  row.innerHTML = '<div class="flex items-center gap-2 bg-slate-800/40 border border-slate-700/50 rounded-lg px-3 py-2">' +
+    '<span class="text-sm">🧊</span>' +
+    '<span class="flex-1 text-[11px] text-slate-300 truncate">' + dracoFile.name + '</span>' +
+    '<span class="text-[10px] text-slate-500 shrink-0">' + fmtSize(dracoFile.size) + '</span>' +
+    '<button onclick="window.removeDracoFile()" class="text-slate-500 hover:text-slate-300 text-xs px-1">✕</button>' +
+  '</div>';
+}
+
+function setDracoFile(f) {
+  if (!f) return;
+  if (!/\.(glb|gltf)$/i.test(f.name)) { toast('⚠️', getLang() === 'en' ? 'Only .glb / .gltf models' : '只要 .glb / .gltf 模型文件'); return; }
+  dracoFile = f;
+  renderDracoFile();
+}
+
+window.removeDracoFile = function() { dracoFile = null; renderDracoFile(); };
+
+window.compressDracoModel = async function() {
+  const isEn = getLang() === 'en';
+  if (!dracoFile) { toast('⚠️', isEn ? 'Add a GLB model first' : '先添加一个 GLB 模型文件'); return; }
+  if (dracoFile.size > MAX_SIZE) { toast('⚠️', '「' + dracoFile.name + '」' + t('maxSize')); return; }
+  const levelEl = document.getElementById('dracoLevel');
+  let level = levelEl ? parseInt(levelEl.value, 10) : 6;
+  if (!Number.isFinite(level)) level = 6;
+  level = Math.min(9, Math.max(1, level));
+  const btn = document.getElementById('dracoCompressBtn');
+  const setDracoProgress = (pct, label) => {
+    const wrap = document.getElementById('globalProgress');
+    const bar = document.getElementById('globalProgressBar');
+    const barText = document.getElementById('globalProgressText');
+    if (wrap) wrap.classList.remove('hidden');
+    if (bar) bar.style.width = pct + '%';
+    if (barText) barText.textContent = label;
+  };
+  const stages = {
+    load: [5, isEn ? 'Loading compressor…' : '正在加载压缩器…'],
+    read: [25, isEn ? 'Reading model…' : '正在读取模型…'],
+    encode: [55, isEn ? 'Compressing geometry…' : '正在压缩几何…'],
+    write: [90, isEn ? 'Writing file…' : '正在写出文件…'],
+  };
+  try {
+    if (btn) btn.disabled = true;
+    setDracoProgress(stages.load[0], stages.load[1]);
+    const { compressGlb } = await import('./converters/draco.js');
+    const buf = await dracoFile.arrayBuffer();
+    const out = await compressGlb(buf, dracoFile.name, {
+      level,
+      onStage: stage => { const s = stages[stage]; if (s) setDracoProgress(s[0], s[1]); },
+    });
+    const outName = dracoFile.name.replace(/\.(glb|gltf)$/i, '') + '-draco.glb';
+    dlBlob(new Blob([out], { type: 'model/gltf-binary' }), outName);
+    const saved = dracoFile.size > 0 ? Math.round((1 - out.length / dracoFile.size) * 100) : 0;
+    toast('✅', (isEn ? 'Compressed: ' : '已压缩：') + fmtSize(dracoFile.size) + ' → ' + fmtSize(out.length) + (saved > 0 ? (isEn ? ' (saved ' + saved + '%)' : '（省 ' + saved + '%）') : ''));
+  } catch (err) {
+    const code = err && err.message;
+    const msg = code === 'ALREADY_DRACO'
+      ? (isEn ? 'This model is already Draco-compressed' : '这个模型已经是 Draco 压缩过的，读不了')
+      : code === 'NO_INDICES'
+        ? (isEn ? 'This model has non-indexed meshes, not supported yet' : '这个模型有无索引的网格，暂不支持')
+        : code === 'GLTF_EXTERNAL'
+          ? (isEn ? 'This .gltf needs external files, use a .glb instead' : '这个 .gltf 依赖外部文件，请用 .glb')
+          : code === 'NOT_GLB'
+            ? (isEn ? 'Not a GLB file' : '这不是 GLB 文件')
+            : (err && err.message) || (isEn ? 'Compress failed' : '压缩失败');
+    toast('❌', msg);
+  } finally {
+    if (btn) btn.disabled = false;
+    hideGlobalProgress();
   }
 };
 

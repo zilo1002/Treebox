@@ -9,7 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@gltf-transform/core": "^4.5.1",
+    "@gltf-transform/extensions": "^4.5.1",
+    "@gltf-transform/functions": "^4.5.1",
     "docx": "^8.5.0",
+    "draco3dgltf": "^1.5.7",
     "gifenc": "^1.0.3",
     "mammoth": "^1.7.0",
     "pinia": "^2.1.7",
