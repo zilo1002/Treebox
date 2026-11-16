@@ -502,6 +502,12 @@ async function renderCategoryPage(catId) {
         '<span class="text-[10px] text-slate-500 shrink-0">' + (isEn ? 'ZIP password' : 'ZIP 密码') + ':</span>' +
         '<input type="password" id="archivePassword" autocomplete="off" placeholder="' + (isEn ? 'Only for extracting a password ZIP' : '只在解压带密码的 ZIP 时填') + '" class="flex-1 bg-slate-900/50 border border-slate-700 rounded-md px-2 py-1.5 text-[11px] text-slate-300 focus:outline-none">' +
       '</div>' +
+      '<div class="flex items-center gap-2">' +
+        '<span class="text-[10px] text-slate-500 shrink-0">' + (isEn ? 'Compression level' : '压缩级别') + ':</span>' +
+        '<input type="number" id="archiveLevel" min="1" max="9" step="1" value="9" class="w-16 bg-slate-900/50 border border-slate-700 rounded-md px-2 py-1.5 text-[11px] text-slate-300 focus:outline-none">' +
+        '<span class="text-[10px] text-slate-500">' + (isEn ? '1–9, higher = smaller but slower (default 9)' : '1–9，越大包越小、打包越慢（默认 9）') + '</span>' +
+      '</div>' +
+      '<p class="text-[10px] text-slate-500 px-1">' + (isEn ? 'Rough guide: text/code ~10–40% of original, images ~90–100%, video/audio ~95–100%, already-compressed files ~100%. Actual size depends on content.' : '参考：文本/代码约原大小 10–40%，图片约 90–100%，视频/音频约 95–100%，已压缩文件约 100%。实际看内容。') + '</p>' +
       '<div class="grid grid-cols-2 gap-2">' +
         '<button onclick="window.packArchiveFiles()" class="py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm font-medium">' + (isEn ? 'Pack as ZIP' : '打包成 ZIP') + '</button>' +
         '<button onclick="window.extractArchiveFile()" class="py-2.5 rounded-xl bg-slate-800 border border-slate-600 text-slate-300 text-sm font-medium">' + (isEn ? 'Extract ZIP' : '解压 ZIP') + '</button>' +
@@ -1583,6 +1589,10 @@ window.packArchiveFiles = async function() {
   if (typeof JSZip === 'undefined') { toast('❌', isEn ? 'ZIP library not loaded yet' : '压缩库还没加载好，稍等一下再试'); return; }
   const zipName = archiveZipName();
   if (!zipName) return; // 用户取消了起名
+  const levelEl = document.getElementById('archiveLevel');
+  let level = levelEl ? parseInt(levelEl.value, 10) : 9;
+  if (!Number.isFinite(level)) level = 9;
+  level = Math.min(9, Math.max(1, level));
   try {
     const zip = new JSZip();
     const used = new Set();
@@ -1607,9 +1617,11 @@ window.packArchiveFiles = async function() {
       zip.file(entryName, e.file);
       count++;
     }
-    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+    const orig = archiveFiles.reduce((a, e) => a + (e.file ? e.file.size : 0), 0);
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level } });
     dlBlob(blob, zipName);
-    toast('✅', (isEn ? 'Packed ' : '已打包 ') + count + (isEn ? ' files' : ' 个文件'));
+    const saved = orig > 0 ? Math.round((1 - blob.size / orig) * 100) : 0;
+    toast('✅', (isEn ? 'Packed ' : '已打包 ') + count + (isEn ? ' files: ' : ' 个文件：') + fmtSize(orig) + ' → ' + fmtSize(blob.size) + (saved > 0 ? (isEn ? ' (saved ' + saved + '%)' : '（省 ' + saved + '%）') : ''));
   } catch (err) {
     toast('❌', (err && err.message) || (isEn ? 'Pack failed' : '打包失败'));
   }
