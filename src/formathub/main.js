@@ -509,7 +509,7 @@ async function renderCategoryPage(catId) {
       '</div>' +
       '<p class="text-[10px] text-slate-500 px-1">' + (isEn ? 'Rough guide: text/code ~10–40% of original, images ~90–100%, video/audio ~95–100%, already-compressed files ~100%. Actual size depends on content.' : '参考：文本/代码约原大小 10–40%，图片约 90–100%，视频/音频约 95–100%，已压缩文件约 100%。实际看内容。') + '</p>' +
       '<div class="grid grid-cols-2 gap-2">' +
-        '<button onclick="window.packArchiveFiles()" class="py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm font-medium">' + (isEn ? 'Pack as ZIP' : '打包成 ZIP') + '</button>' +
+        '<button id="packArchiveBtn" onclick="window.packArchiveFiles()" class="py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm font-medium disabled:opacity-50">' + (isEn ? 'Pack as ZIP' : '打包成 ZIP') + '</button>' +
         '<button onclick="window.extractArchiveFile()" class="py-2.5 rounded-xl bg-slate-800 border border-slate-600 text-slate-300 text-sm font-medium">' + (isEn ? 'Extract ZIP' : '解压 ZIP') + '</button>' +
       '</div>' +
       '<button onclick="window.addArchiveFolder()" class="w-full py-2.5 rounded-xl bg-slate-800 border border-slate-600 text-slate-300 text-sm font-medium">' + (isEn ? '📂 Add folder' : '📂 添加文件夹') + '</button>' +
@@ -1593,7 +1593,21 @@ window.packArchiveFiles = async function() {
   let level = levelEl ? parseInt(levelEl.value, 10) : 9;
   if (!Number.isFinite(level)) level = 9;
   level = Math.min(9, Math.max(1, level));
+  const packBtn = document.getElementById('packArchiveBtn');
+  const setPackProgress = pct => {
+    const p = Math.max(0, Math.min(100, Math.round(pct || 0)));
+    const wrap = document.getElementById('globalProgress');
+    const bar = document.getElementById('globalProgressBar');
+    const barText = document.getElementById('globalProgressText');
+    if (wrap) wrap.classList.remove('hidden');
+    if (bar) bar.style.width = p + '%';
+    if (barText) barText.textContent = (isEn ? 'Packing ' : '正在打包 ') + p + '%';
+  };
+  const orig = archiveFiles.reduce((a, e) => a + (e.file ? e.file.size : 0), 0);
+  const showProgress = orig > 10 * 1024 * 1024; // 只有大包才显示进度条，小包一闪而过没意义
   try {
+    if (packBtn) packBtn.disabled = true;
+    if (showProgress) setPackProgress(0);
     const zip = new JSZip();
     const used = new Set();
     let count = 0;
@@ -1617,13 +1631,15 @@ window.packArchiveFiles = async function() {
       zip.file(entryName, e.file);
       count++;
     }
-    const orig = archiveFiles.reduce((a, e) => a + (e.file ? e.file.size : 0), 0);
-    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level } });
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level } }, metadata => { if (showProgress) setPackProgress(metadata.percent); });
     dlBlob(blob, zipName);
     const saved = orig > 0 ? Math.round((1 - blob.size / orig) * 100) : 0;
     toast('✅', (isEn ? 'Packed ' : '已打包 ') + count + (isEn ? ' files: ' : ' 个文件：') + fmtSize(orig) + ' → ' + fmtSize(blob.size) + (saved > 0 ? (isEn ? ' (saved ' + saved + '%)' : '（省 ' + saved + '%）') : ''));
   } catch (err) {
     toast('❌', (err && err.message) || (isEn ? 'Pack failed' : '打包失败'));
+  } finally {
+    if (packBtn) packBtn.disabled = false;
+    if (showProgress) hideGlobalProgress();
   }
 };
 
